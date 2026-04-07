@@ -5,6 +5,14 @@
 **Status**: Draft
 **Input**: User description: "P2P Payment Request feature for consumer fintech app - request money from friends with creation flow, management dashboard, detail view, payment fulfillment simulation, and request expiration"
 
+## Clarifications
+
+### Session 2026-04-08
+
+- Q: What is the maximum character length for the optional note? → A: 280 characters
+- Q: How should idempotency keys be stored and retained? → A: Column on `payment_requests` table (store the key that performed the state transition)
+- Q: How should errors be displayed to users? → A: Toast notifications for action errors (pay/decline/cancel failures, network errors) + inline validation for form fields
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Create and View a Payment Request (Priority: P1)
@@ -344,6 +352,9 @@ page navigation.
   matches the recipient email field (self-request prevention).
 - **FR-005**: System MUST generate a unique shareable link for
   each payment request using a cryptographically random token.
+- **FR-005a**: System MUST validate that the optional note does not
+  exceed 280 characters. Notes exceeding this limit MUST be rejected
+  with an inline validation error.
 - **FR-006**: System MUST store amounts as integer cents internally
   to avoid floating-point precision errors.
 - **FR-007**: System MUST display a management dashboard with
@@ -398,6 +409,10 @@ page navigation.
   endpoints (pay, decline, cancel) at a minimum of 10 requests
   per minute per authenticated user. Exceeding the limit MUST
   return HTTP 429 Too Many Requests.
+- **FR-025**: System MUST display action errors (pay/decline/cancel
+  failures, network errors, 409 conflicts, 429 rate limits) as
+  toast notifications. Form validation errors (amount, email,
+  note length) MUST be displayed inline next to the relevant field.
 
 ### Key Entities
 
@@ -408,12 +423,16 @@ page navigation.
 - **PaymentRequest**: The core domain object. Key attributes:
   unique ID, sender (user reference), recipient email, recipient
   user (resolved when a user with matching email registers or
-  logs in), amount in cents, note (optional), status (Pending,
+  logs in), amount in cents, note (optional, max 280 characters),
+  status (Pending,
   Paid, Declined, Cancelled — note: "Expired" is not stored but
   derived at query time from `expires_at`), shareable token
   (cryptographically random), creation timestamp, expiration
   timestamp (`expires_at` = creation + 7 days), version (integer,
-  incremented on each state mutation for optimistic locking).
+  incremented on each state mutation for optimistic locking),
+  idempotency key (string, stores the client-generated UUID that
+  performed the most recent state transition — used to detect
+  duplicate requests).
 
 ### State Machine
 
