@@ -98,7 +98,7 @@ Create a new payment request.
 }
 ```
 
-- `amount`: String with exactly 2 decimal places. Converted to cents server-side.
+- `amount`: String with exactly 2 decimal places. Converted to minor units (cents) server-side.
 - `note`: Optional, max 500 characters.
 
 **Response 201**:
@@ -113,7 +113,7 @@ Create a new payment request.
     },
     "recipient_email": "friend@example.com",
     "recipient": null,
-    "amount_cents": 2500,
+    "amount_minor": 2500,
     "amount_display": "$25.00",
     "note": "Dinner last night",
     "status": "pending",
@@ -132,7 +132,7 @@ Create a new payment request.
   "error": "Validation failed",
   "code": "VALIDATION_ERROR",
   "details": {
-    "amount": "Amount must be between $0.01 and $10,000.00",
+    "amount": "Amount must be between $0.01 and $10,000.00 (USD limit; currency-specific if multi-currency added)",
     "recipient_email": "Invalid email format"
   }
 }
@@ -166,7 +166,7 @@ List payment requests for the authenticated user.
       "sender": { "id": "uuid", "email": "...", "display_name": "..." },
       "recipient_email": "friend@example.com",
       "recipient": { "id": "uuid", "email": "...", "display_name": "..." },
-      "amount_cents": 2500,
+      "amount_minor": 2500,
       "amount_display": "$25.00",
       "note": "Dinner last night",
       "status": "pending",

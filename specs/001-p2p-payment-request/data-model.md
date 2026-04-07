@@ -35,7 +35,7 @@ The core domain object. Represents a money request from sender to recipient.
 | `sender_id` | `UUID` | FK → users(id), NOT NULL | User who created the request |
 | `recipient_email` | `TEXT` | NOT NULL | May not have an account yet |
 | `recipient_id` | `UUID` | FK → users(id), NULLABLE | Resolved when recipient registers/logs in |
-| `amount_cents` | `INTEGER` | NOT NULL, CHECK > 0, CHECK <= 1000000 | Stored as integer cents (FR-006) |
+| `amount_minor` | `INTEGER` | NOT NULL, CHECK > 0, CHECK <= 1000000 | Stored as integer minor units, e.g. cents for USD (FR-006). Max 1,000,000 = $10,000 USD; limit is currency-specific and should be configurable if multi-currency is added |
 | `note` | `TEXT` | NULLABLE | Optional message, max 500 chars |
 | `status` | `TEXT` | NOT NULL, DEFAULT 'pending' | One of: pending, paid, declined, cancelled |
 | `share_token` | `TEXT` | UNIQUE, NOT NULL | Cryptographically random, 22-char base64url |
@@ -52,7 +52,7 @@ The core domain object. Represents a money request from sender to recipient.
 - `INDEX(status)` — status filtering
 
 **Validation Rules**:
-- `amount_cents` > 0 AND <= 1,000,000 (= $10,000.00) — FR-002
+- `amount_minor` > 0 AND <= 1,000,000 (= $10,000.00 USD). This limit is currency-specific; multi-currency support would require per-currency max amounts — FR-002
 - `recipient_email` must be valid email — FR-003
 - `sender_id` user's email != `recipient_email` — FR-004 (enforced at service layer)
 - `note` max 500 characters

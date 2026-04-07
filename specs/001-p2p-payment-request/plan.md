@@ -5,7 +5,7 @@
 
 ## Summary
 
-Build a P2P payment request feature for a consumer fintech app. Users can request money from friends via email, manage requests through a dashboard, fulfill payments via simulation, and handle request expiration. The system uses a Go backend with PostgreSQL and a React 19 + Vite frontend with TailwindCSS/shadcn/ui. All monetary values stored as integer cents, state transitions enforced via explicit FSM, idempotency via client-generated UUIDs, and optimistic locking for concurrency control.
+Build a P2P payment request feature for a consumer fintech app. Users can request money from friends via email, manage requests through a dashboard, fulfill payments via simulation, and handle request expiration. The system uses a Go backend with PostgreSQL and a React 19 + Vite frontend with TailwindCSS/shadcn/ui. All monetary values stored as integer minor units, state transitions enforced via explicit FSM, idempotency via client-generated UUIDs, and optimistic locking for concurrency control.
 
 ## Technical Context
 
@@ -25,7 +25,7 @@ Build a P2P payment request feature for a consumer fintech app. Users can reques
 
 | # | Principle | Status | Notes |
 |---|-----------|--------|-------|
-| I | Financial Data Integrity | PASS | Amounts stored as integer cents, UUIDv4 for IDs, explicit FSM for state transitions, max $10,000 cap, 2-decimal validation |
+| I | Financial Data Integrity | PASS | Amounts stored as integer minor units, UUIDv4 for IDs, explicit FSM for state transitions, max $10,000 cap, 2-decimal validation |
 | II | Test-After-Every-Step | PASS | go test + testify, Vitest, Playwright with video recording planned per phase |
 | III | Responsive-First Design | PASS | Mobile 320px+ and desktop 1024px+, TailwindCSS mobile-first, shadcn/ui with 44px touch targets |
 | IV | Static Analysis & Clean Code | PASS | golangci-lint strict config (backend), ESLint + Prettier + TS strict mode (frontend) |
