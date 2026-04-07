@@ -45,6 +45,7 @@ Create a session via mock email auth.
   "user": {
     "id": "uuid",
     "email": "user@example.com",
+    "phone": null,
     "display_name": "user",
     "created_at": "2026-04-08T00:00:00Z"
   }
@@ -73,6 +74,7 @@ Get current authenticated user.
   "user": {
     "id": "uuid",
     "email": "user@example.com",
+    "phone": "+14155551234",
     "display_name": "user",
     "created_at": "2026-04-08T00:00:00Z"
   }
@@ -93,11 +95,14 @@ Create a new payment request.
 ```json
 {
   "recipient_email": "friend@example.com",
+  "recipient_phone": "+14155551234",
   "amount": "25.00",
   "note": "Dinner last night"
 }
 ```
 
+- `recipient_email`: Optional if `recipient_phone` provided. At least one required.
+- `recipient_phone`: Optional if `recipient_email` provided. E.164 format.
 - `amount`: String with exactly 2 decimal places. Converted to minor units (cents) server-side.
 - `note`: Optional, max 500 characters.
 
@@ -112,6 +117,7 @@ Create a new payment request.
       "display_name": "user"
     },
     "recipient_email": "friend@example.com",
+    "recipient_phone": "+14155551234",
     "recipient": null,
     "amount_minor": 2500,
     "amount_display": "$25.00",
@@ -133,7 +139,8 @@ Create a new payment request.
   "code": "VALIDATION_ERROR",
   "details": {
     "amount": "Amount must be between $0.01 and $10,000.00 (USD limit; currency-specific if multi-currency added)",
-    "recipient_email": "Invalid email format"
+    "recipient_email": "Invalid email format",
+    "recipient_phone": "Invalid phone format (must be E.164, e.g. +14155551234)"
   }
 }
 ```
@@ -155,7 +162,7 @@ List payment requests for the authenticated user.
 |-------|------|---------|-------------|
 | `direction` | `outgoing` \| `incoming` | `outgoing` | Filter by sent/received |
 | `status` | `pending` \| `paid` \| `declined` \| `expired` \| `cancelled` | all | Filter by status |
-| `search` | string | — | Partial email match on counterparty |
+| `search` | string | — | Partial email or phone match on counterparty |
 
 **Response 200**:
 ```json
@@ -165,7 +172,8 @@ List payment requests for the authenticated user.
       "id": "uuid",
       "sender": { "id": "uuid", "email": "...", "display_name": "..." },
       "recipient_email": "friend@example.com",
-      "recipient": { "id": "uuid", "email": "...", "display_name": "..." },
+      "recipient_phone": "+14155551234",
+      "recipient": { "id": "uuid", "email": "...", "phone": "...", "display_name": "..." },
       "amount_minor": 2500,
       "amount_display": "$25.00",
       "note": "Dinner last night",

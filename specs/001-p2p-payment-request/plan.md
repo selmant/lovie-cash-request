@@ -5,7 +5,7 @@
 
 ## Summary
 
-Build a P2P payment request feature for a consumer fintech app. Users can request money from friends via email, manage requests through a dashboard, fulfill payments via simulation, and handle request expiration. The system uses a Go backend with PostgreSQL and a React 19 + Vite frontend with TailwindCSS/shadcn/ui. All monetary values stored as integer minor units, state transitions enforced via explicit FSM, idempotency via client-generated UUIDs, and optimistic locking for concurrency control.
+Build a P2P payment request feature for a consumer fintech app. Users can request money from friends via email or phone number, manage requests through a dashboard, fulfill payments via simulation, and handle request expiration. The system uses a Go backend with PostgreSQL and a React 19 + Vite frontend with TailwindCSS/shadcn/ui. All monetary values stored as integer minor units, state transitions enforced via explicit FSM, idempotency via client-generated UUIDs, and optimistic locking for concurrency control.
 
 ## Technical Context
 
