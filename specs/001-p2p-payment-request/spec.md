@@ -10,11 +10,11 @@
 ### User Story 1 - Create and View a Payment Request (Priority: P1)
 
 A user wants to request money from a friend. They navigate to the
-"New Request" form, enter the recipient's email or phone number,
-specify the amount, and optionally add a note (e.g., "Dinner last
-night"). The system validates the inputs, creates the request, and
-provides a unique shareable link. The user can then see this
-request in their outgoing requests list.
+"New Request" form, enter the recipient's email, specify the
+amount, and optionally add a note (e.g., "Dinner last night").
+The system validates the inputs, creates the request, and provides
+a unique shareable link. The user can then see this request in
+their outgoing requests list.
 
 **Why this priority**: This is the foundational action — without
 request creation there is no feature. It also proves the core data
@@ -44,24 +44,42 @@ valid shareable link.
    recipient field.
 
 4. **Given** a logged-in user on the New Request page,
-   **When** they enter a valid phone number (e.g., "+1234567890"),
-   **Then** the system accepts it as a valid recipient and creates
-   the request.
-
-5. **Given** a logged-in user on the New Request page,
    **When** they enter an amount exceeding $10,000.00,
    **Then** the system displays a validation error indicating the
    maximum allowed amount.
 
-6. **Given** a logged-in user on the New Request page,
+5. **Given** a logged-in user on the New Request page,
    **When** they submit the form without filling in the note,
    **Then** the system creates the request successfully (note is
    optional).
 
-7. **Given** a created request with a shareable link,
-   **When** a recipient opens the link while logged in,
+6. **Given** a logged-in user on the New Request page,
+   **When** they enter an amount with more than 2 decimal places
+   (e.g., $10.999),
+   **Then** the system rejects the input with a validation error
+   "Amount must have at most 2 decimal places."
+
+7. **Given** a logged-in user on the New Request page,
+   **When** they enter their own email as the recipient,
+   **Then** the system rejects the request with an error
+   "You cannot request money from yourself."
+
+8. **Given** a created request with a shareable link,
+   **When** an unauthenticated user opens the link,
+   **Then** they are redirected to the login page with the
+   shareable link preserved as a redirect target. After login,
+   they are redirected back to the request detail view.
+
+9. **Given** a created request with a shareable link,
+   **When** a logged-in recipient opens the link,
    **Then** they see the request detail view with Pay and Decline
    options.
+
+10. **Given** a created request with a shareable link,
+    **When** a logged-in user who is neither sender nor recipient
+    opens the link,
+    **Then** the system displays a "Not authorized to view this
+    request" message.
 
 ---
 
@@ -72,6 +90,10 @@ incoming requests). They can view the request details and choose
 to pay or decline. If they pay, the system simulates payment
 processing with a 2-3 second loading state, then confirms success.
 The sender can also cancel a pending request they created.
+
+All state-mutating actions (pay, decline, cancel) MUST include a
+client-generated idempotency key (UUID) in the request header to
+prevent duplicate processing.
 
 **Why this priority**: This is the core transaction flow. Without
 pay/decline/cancel, requests have no resolution path.
@@ -104,13 +126,31 @@ both the sender's outgoing list and recipient's incoming list.
    **Then** no action buttons (Pay, Decline, Cancel) are shown —
    only the final status.
 
-5. **Given** a request with status "Declined" or "Cancelled",
+5. **Given** a request with status "Declined", "Cancelled", or
+   "Expired",
    **When** any user views the request detail,
    **Then** no action buttons are shown — only the final status.
 
-6. **Given** a logged-in user clicking "Pay" on an incoming request,
+6. **Given** a logged-in user clicking "Pay" on an incoming
+   request,
    **When** they click "Pay" again rapidly (double-click),
-   **Then** the system processes the payment only once (idempotent).
+   **Then** the system processes the payment only once. The second
+   request with the same idempotency key returns the same
+   successful result without side effects.
+
+7. **Given** a logged-in user clicking "Decline" on an incoming
+   request,
+   **When** the same decline request is sent twice (same
+   idempotency key),
+   **Then** the system processes the decline only once.
+
+8. **Given** two users attempting to act on the same pending
+   request simultaneously (e.g., recipient pays while sender
+   cancels),
+   **When** both requests reach the server concurrently,
+   **Then** the first request succeeds and the second receives
+   HTTP 409 Conflict with a clear error message. The frontend
+   displays a notification and refreshes the request state.
 
 ---
 
@@ -119,8 +159,9 @@ both the sender's outgoing list and recipient's incoming list.
 A user wants to manage all their payment requests from a single
 dashboard. The dashboard shows two sections: outgoing requests
 (sent by user) and incoming requests (received by user). Users
-can filter by status (Pending, Paid, Declined, Expired) and
-search by recipient or sender name/email.
+can filter by status (Pending, Paid, Declined, Expired,
+Cancelled) and search by recipient or sender email. Requests are
+sorted by creation date, most recent first.
 
 **Why this priority**: The dashboard aggregates all request data.
 It depends on US1 and US2 being functional first, and adds a
@@ -135,7 +176,8 @@ requests and searching by email narrows results correctly.
 1. **Given** a logged-in user on the dashboard,
    **When** the page loads,
    **Then** they see two tabs/sections: "Outgoing" and "Incoming"
-   with all their requests listed, most recent first.
+   with all their requests listed, sorted by creation date
+   descending (most recent first).
 
 2. **Given** a logged-in user on the dashboard with requests in
    multiple statuses,
@@ -156,14 +198,21 @@ requests and searching by email narrows results correctly.
    **Then** the layout adapts to a single-column view with the
    same filter and search functionality accessible.
 
+6. **Given** a logged-in user on the dashboard,
+   **When** no requests match the current filters,
+   **Then** an empty state message "No requests match your
+   filters" is displayed.
+
 ---
 
 ### User Story 4 - Request Expiration (Priority: P4)
 
 Payment requests that remain pending for more than 7 days
-automatically expire. The request detail view shows an expiration
-countdown for pending requests. Expired requests cannot be paid
-or declined.
+automatically expire. Expiration is determined at query time:
+the system treats any pending request whose `expires_at` timestamp
+is in the past as expired. No background process is required. The
+request detail view shows an expiration countdown for pending
+requests. Expired requests cannot be paid or declined.
 
 **Why this priority**: Expiration is a business rule that prevents
 stale requests from lingering. It depends on the core request
@@ -177,22 +226,36 @@ past 7 days (or seed an old request), and verify the status shows
 
 1. **Given** a pending request created 6 days ago,
    **When** a user views the request detail,
-   **Then** they see a countdown showing "Expires in 1 day".
+   **Then** they see a countdown showing time remaining. When more
+   than 24 hours remain, display days (e.g., "Expires in 2 days").
+   When under 24 hours, display hours and minutes (e.g., "Expires
+   in 5h 32m").
 
-2. **Given** a pending request created 7+ days ago,
-   **When** the system checks for expiration (on page load or via
-   background process),
-   **Then** the request status changes to "Expired".
+2. **Given** a pending request whose `expires_at` is in the past,
+   **When** any API endpoint reads this request,
+   **Then** the system returns the status as "Expired" (derived
+   at query time from `WHERE status = 'pending' AND expires_at <
+   now()`). The database row retains `status = 'pending'` — the
+   API layer derives "Expired" for display.
 
 3. **Given** an expired request,
    **When** the recipient attempts to pay,
-   **Then** the system blocks the action and displays "This request
-   has expired".
+   **Then** the API checks `expires_at` before processing. If
+   expired, the system blocks the action, returns an error, and
+   the frontend displays "This request has expired."
 
 4. **Given** an expired request,
    **When** any user views the request detail,
    **Then** no action buttons are shown, and the status displays
    "Expired" with the original expiration date.
+
+5. **Given** a pending request and a concurrent cancel attempt
+   arriving after the expiration time,
+   **When** the cancel request reaches the server,
+   **Then** the system checks `expires_at` first. If expired,
+   the cancel is rejected (request is already terminal). No
+   conflict between expiration and cancel can occur since
+   expiration is query-derived, not a write operation.
 
 ---
 
@@ -216,12 +279,15 @@ page navigation.
 
 1. **Given** an unauthenticated user visiting any page,
    **When** the page loads,
-   **Then** they are redirected to the login page.
+   **Then** they are redirected to the login page. If the original
+   URL was a shareable link or specific page, it is preserved as
+   a redirect target (e.g., `/login?redirect=/r/abc123`).
 
 2. **Given** a user on the login page,
    **When** they enter a valid email and submit,
    **Then** they are logged in, a session is created, and they
-   are redirected to the dashboard.
+   are redirected to the dashboard (or to the preserved redirect
+   target if one exists).
 
 3. **Given** a logged-in user,
    **When** they click "Log out",
@@ -238,13 +304,16 @@ page navigation.
 
 - What happens when a user requests money from their own email?
   System MUST reject self-requests with a clear error message.
+  The check compares the sender's email against the recipient
+  email field at creation time.
 - What happens when a recipient is not a registered user?
-  The request is created with the recipient's contact info. When
-  that person registers and logs in, they see the pending request
-  in their incoming list.
+  The request is created with the recipient's email. When that
+  person registers and logs in with the same email, they see the
+  pending request in their incoming list (matched by email).
 - What happens if the server is unreachable during "Pay" action?
   The frontend displays an error toast and does not change the
-  request status. The user can retry.
+  request status. The user can retry with the same idempotency
+  key.
 - What happens when filtering returns zero results?
   The dashboard displays an empty state message: "No requests
   match your filters."
@@ -252,61 +321,83 @@ page navigation.
   that does not belong to them (they are neither sender nor
   recipient)? The system shows a "Not authorized" message.
 - What happens when the amount has more than 2 decimal places
-  (e.g., $10.999)? The system rounds to 2 decimal places or
-  rejects input with a validation error.
+  (e.g., $10.999)? The system rejects the input with a
+  validation error. No silent rounding.
+- What happens when an unauthenticated user opens a shareable
+  link? They are redirected to login with the link preserved.
+  After login, they are redirected back to the request view.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
 - **FR-001**: System MUST allow authenticated users to create
-  payment requests by specifying a recipient (email or phone),
-  amount (in USD), and an optional note.
+  payment requests by specifying a recipient email, amount (in
+  USD), and an optional note.
 - **FR-002**: System MUST validate that the amount is greater than
-  $0.00 and does not exceed $10,000.00.
-- **FR-003**: System MUST validate recipient contact format (valid
-  email per RFC 5322 or E.164 phone number format).
-- **FR-004**: System MUST reject requests where the sender and
-  recipient are the same user.
+  $0.00, does not exceed $10,000.00, and has at most 2 decimal
+  places. Amounts with more than 2 decimal places MUST be
+  rejected (no silent rounding).
+- **FR-003**: System MUST validate recipient contact format as a
+  valid email address per RFC 5322.
+- **FR-004**: System MUST reject requests where the sender's email
+  matches the recipient email field (self-request prevention).
 - **FR-005**: System MUST generate a unique shareable link for
   each payment request using a cryptographically random token.
 - **FR-006**: System MUST store amounts as integer cents internally
   to avoid floating-point precision errors.
 - **FR-007**: System MUST display a management dashboard with
   separate views for outgoing (sent) and incoming (received)
-  requests.
+  requests, sorted by creation date descending.
 - **FR-008**: System MUST support filtering requests by status:
-  Pending, Paid, Declined, Expired.
+  Pending, Paid, Declined, Expired, Cancelled.
 - **FR-009**: System MUST support searching requests by
-  recipient/sender email or name (partial match).
+  recipient/sender email (partial match).
 - **FR-010**: System MUST display request details including amount,
   note, sender info, recipient info, creation timestamp, and
   current status.
 - **FR-011**: System MUST display "Pay" and "Decline" action
-  buttons for pending incoming requests only.
+  buttons for pending (non-expired) incoming requests only.
 - **FR-012**: System MUST display a "Cancel" action for pending
-  outgoing requests only.
+  (non-expired) outgoing requests only.
 - **FR-013**: System MUST simulate payment processing with a 2-3
   second loading state before confirming success.
-- **FR-014**: System MUST enforce idempotent payment processing —
-  duplicate pay requests for the same request MUST be handled
-  without double-processing.
-- **FR-015**: System MUST update request status atomically and
-  reflect changes in both sender and recipient dashboards.
-- **FR-016**: System MUST automatically expire pending requests
-  after 7 days from creation.
+- **FR-014**: System MUST enforce idempotent processing for all
+  state-mutating actions (pay, decline, cancel). Each action
+  MUST include a client-generated idempotency key (UUID) in the
+  request header. Duplicate requests with the same idempotency
+  key MUST return the same result without side effects.
+- **FR-015**: System MUST update request status atomically using
+  optimistic locking. Both sender and recipient dashboards
+  reflect the updated status on their next page load or
+  navigation.
+- **FR-016**: System MUST treat pending requests as expired when
+  their `expires_at` timestamp (creation + 7 days) is in the
+  past. Expiration is derived at query time — no background
+  process is required.
 - **FR-017**: System MUST display an expiration countdown on
-  pending request detail views.
-- **FR-018**: System MUST block pay/decline actions on expired
-  requests.
+  pending request detail views. Display days when >24h remain,
+  hours and minutes when <24h remain.
+- **FR-018**: System MUST block pay/decline/cancel actions on
+  expired requests by checking `expires_at` before processing
+  any state mutation.
 - **FR-019**: System MUST provide email-based mock authentication
   (email entry, session creation, logout).
 - **FR-020**: System MUST redirect unauthenticated users to the
-  login page.
+  login page, preserving the original URL as a redirect target
+  so users return to their intended page after login.
 - **FR-021**: System MUST work responsively on mobile (320px+)
   and desktop (1024px+) viewports.
 - **FR-022**: System MUST return HTTP 409 Conflict when concurrent
-  state mutations are detected on the same request.
+  state mutations are detected on the same request (optimistic
+  locking violation).
+- **FR-023**: System MUST enforce CSRF protection on all
+  state-changing endpoints (create, pay, decline, cancel, login,
+  logout).
+- **FR-024**: System MUST enforce rate limiting on payment-mutating
+  endpoints (pay, decline, cancel) at a minimum of 10 requests
+  per minute per authenticated user. Exceeding the limit MUST
+  return HTTP 429 Too Many Requests.
 
 ### Key Entities
 
@@ -315,12 +406,31 @@ page navigation.
   timestamp. A user can be both a sender and recipient across
   different requests.
 - **PaymentRequest**: The core domain object. Key attributes:
-  unique ID, sender (user reference), recipient contact (email or
-  phone), recipient user (resolved when recipient registers),
-  amount in cents, note (optional), status (Pending, Paid,
-  Declined, Expired, Cancelled), shareable token, creation
-  timestamp, expiration timestamp (creation + 7 days), version
-  (for optimistic locking).
+  unique ID, sender (user reference), recipient email, recipient
+  user (resolved when a user with matching email registers or
+  logs in), amount in cents, note (optional), status (Pending,
+  Paid, Declined, Cancelled — note: "Expired" is not stored but
+  derived at query time from `expires_at`), shareable token
+  (cryptographically random), creation timestamp, expiration
+  timestamp (`expires_at` = creation + 7 days), version (integer,
+  incremented on each state mutation for optimistic locking).
+
+### State Machine
+
+Valid state transitions for PaymentRequest status:
+
+```
+Pending -> Paid       (recipient pays)
+Pending -> Declined   (recipient declines)
+Pending -> Cancelled  (sender cancels)
+Pending -> [Expired]  (derived: expires_at < now())
+```
+
+Terminal states: Paid, Declined, Cancelled, Expired.
+No transitions are allowed from any terminal state.
+"Expired" is not a stored status — it is derived at query time.
+All mutation endpoints MUST check both stored status = Pending
+AND expires_at > now() before allowing any transition.
 
 ## Success Criteria *(mandatory)*
 
@@ -335,34 +445,47 @@ page navigation.
 - **SC-004**: Status filter and search results update within
   1 second of user input.
 - **SC-005**: All 5 request statuses (Pending, Paid, Declined,
-  Expired, Cancelled) are correctly reflected across both sender
-  and recipient views within 3 seconds of the state change.
+  Expired, Cancelled) are correctly reflected in both sender
+  and recipient views upon page load or navigation.
 - **SC-006**: The application is fully usable on a 320px-wide
   mobile viewport with no horizontal scrolling or overlapping
   elements.
-- **SC-007**: Duplicate rapid Pay clicks result in exactly one
-  payment processed.
-- **SC-008**: Expired requests (7+ days old) cannot be paid
-  under any circumstances.
+- **SC-007**: Duplicate rapid Pay/Decline/Cancel clicks result in
+  exactly one state mutation processed.
+- **SC-008**: Expired requests (7+ days old) cannot be paid,
+  declined, or cancelled under any circumstances.
 
 ## Assumptions
 
 - Users have stable internet connectivity (no offline mode).
-- The application operates in USD only — no multi-currency support.
+- The application operates in USD only — no multi-currency
+  support.
 - "Mock auth" means entering an email immediately logs the user
   in. No password, no email verification, no magic link delivery.
   This is sufficient for the prototype to demonstrate multi-user
   flows.
+- Recipients are identified by email only. Phone number support
+  is excluded from this prototype because users authenticate by
+  email — a phone-number recipient could never be resolved to a
+  user account.
 - A recipient who is not yet registered will have their request
-  waiting for them upon registration. No push notification or
-  email notification is sent (out of scope for prototype).
+  waiting for them upon registration. The system matches by
+  email: when a new user logs in, any PaymentRequest with a
+  matching `recipient_email` is linked to their account. No push
+  notification or email notification is sent (out of scope).
 - The payment simulation does not interact with any real payment
   processor — it is a timed delay followed by a status update.
 - The shareable link is publicly accessible but only authorized
   parties (sender or recipient) can take actions on the request.
+  Unauthenticated users opening a shareable link are redirected
+  to login with the link preserved for post-login redirect.
 - Request pagination is not required for the prototype (dashboard
   shows all requests). Can be added later if needed.
 - The 7-day expiration is calculated from request creation
-  timestamp, not from any subsequent event.
+  timestamp, not from any subsequent event. Expiration is derived
+  at query time, not stored as a status.
 - The system assumes a single-tenant deployment (one app instance
   serving all users) — no multi-tenancy.
+- Dashboard status updates are reflected on page load/navigation
+  (no real-time push via WebSockets or SSE). This is sufficient
+  for the prototype scope.
