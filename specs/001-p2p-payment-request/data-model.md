@@ -43,7 +43,6 @@ The core domain object. Represents a money request from sender to recipient.
 | `status` | `TEXT` | NOT NULL, DEFAULT 'pending' | One of: pending, paid, declined, cancelled |
 | `share_token` | `TEXT` | UNIQUE, NOT NULL | Cryptographically random, 22-char base64url |
 | `idempotency_key` | `TEXT` | NULLABLE | Client-generated UUID, set on terminal state transition |
-| `version` | `INTEGER` | NOT NULL, DEFAULT 1 | Optimistic locking counter |
 | `expires_at` | `TIMESTAMPTZ` | NOT NULL | creation + 7 days |
 | `created_at` | `TIMESTAMPTZ` | NOT NULL, DEFAULT now() | |
 | `updated_at` | `TIMESTAMPTZ` | NOT NULL, DEFAULT now() | |
@@ -121,19 +120,19 @@ users 1──────N payment_requests (as recipient via recipient_id, null
 ```
 
 **Transition Guards** (all enforced in service layer + SQL WHERE):
-- `pending → paid`: Only recipient, `expires_at > now()`, `version` match
-- `pending → declined`: Only recipient, `expires_at > now()`, `version` match
-- `pending → cancelled`: Only sender, `expires_at > now()`, `version` match
+- `pending → paid`: Only recipient, `expires_at > now()`
+- `pending → declined`: Only recipient, `expires_at > now()`
+- `pending → cancelled`: Only sender, `expires_at > now()`
 - All terminal states (paid, declined, cancelled, expired): No further transitions allowed
+- **No edits allowed**: Once created, payment request fields (amount, note, recipient) are immutable. This eliminates the need for optimistic locking (version column) — the status guard is sufficient for concurrency safety. If editing is added in the future, a version column should be reintroduced.
 
 **SQL Guard Pattern**:
 ```sql
 UPDATE payment_requests
-SET status = $1, idempotency_key = $4, version = version + 1, updated_at = now()
+SET status = $1, idempotency_key = $3, updated_at = now()
 WHERE id = $2
   AND status = 'pending'
   AND expires_at > now()
-  AND version = $3
 RETURNING *;
 ```
 If 0 rows returned: check if `idempotency_key = $4` on current row → return current state (idempotent success). Otherwise determine appropriate error (409 Conflict, 410 Gone/expired, 404 Not Found).

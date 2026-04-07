@@ -23,12 +23,11 @@
 - **Rationale**: Only one mutation can ever succeed per request (FSM guarantees pending → single terminal state). A single column is sufficient — no separate table, no cleanup goroutine, no response caching middleware. On duplicate request: if `idempotency_key` matches, return current state as success; otherwise 409.
 - **Alternatives considered**: Separate `idempotency_keys` table with response caching (overkill for 3 actions on one entity), Redis-based store (unnecessary complexity)
 
-### 4. Optimistic Locking — Version Column
+### 4. Concurrency Safety — Status Guard
 
-- **Decision**: `version INT NOT NULL DEFAULT 1` column on `payment_requests`
-- **Query pattern**: `UPDATE payment_requests SET status = $1, version = version + 1, updated_at = now() WHERE id = $2 AND version = $3 RETURNING *`
-- **Rationale**: Check rows affected == 0 to detect conflicts, return HTTP 409. sqlc's RETURNING maps cleanly to generated Go structs. Simplest OCC pattern.
-- **Alternatives considered**: `updated_at`-based OCC (timestamp precision issues), `SELECT ... FOR UPDATE` (heavier, unnecessary)
+- **Decision**: Rely on `WHERE status = 'pending' AND expires_at > now()` in UPDATE queries instead of a version column
+- **Rationale**: Since all mutations are one-shot terminal transitions (pending → paid/declined/cancelled), the status check is sufficient. PostgreSQL row-level locking ensures concurrent UPDATEs serialize — the second sees the updated status and returns 0 rows. A version column would be redundant.
+- **Alternatives considered**: Version column (unnecessary given one-shot FSM transitions), `SELECT ... FOR UPDATE` (heavier, unnecessary)
 
 ### 5. CSRF Protection — Double-Submit Cookie
 

@@ -5,7 +5,7 @@
 
 ## Summary
 
-Build a P2P payment request feature for a consumer fintech app. Users can request money from friends via email or phone number, manage requests through a dashboard, fulfill payments via simulation, and handle request expiration. The system uses a Go backend with PostgreSQL and a React 19 + Vite frontend with TailwindCSS/shadcn/ui. All monetary values stored as integer minor units, state transitions enforced via explicit FSM, idempotency via client-generated UUIDs, and optimistic locking for concurrency control.
+Build a P2P payment request feature for a consumer fintech app. Users can request money from friends via email or phone number, manage requests through a dashboard, fulfill payments via simulation, and handle request expiration. The system uses a Go backend with PostgreSQL and a React 19 + Vite frontend with TailwindCSS/shadcn/ui. All monetary values stored as integer minor units, state transitions enforced via explicit FSM, idempotency via client-generated UUIDs, and status-guard concurrency control.
 
 ## Technical Context
 
@@ -33,7 +33,7 @@ Build a P2P payment request feature for a consumer fintech app. Users can reques
 | VI | Containerized Development | PASS | Docker Compose planned: PostgreSQL + Go API + Vite dev server |
 | VII | Incremental Documentation | PASS | README.md created at init, updated after each phase |
 | VIII | Security & Authentication | PASS | Input sanitization, crypto-random shareable tokens, auth middleware (swappable), CSRF protection, rate limiting 10 req/min on mutating endpoints |
-| IX | Idempotency & Concurrency | PASS | Client-generated UUID idempotency keys, optimistic locking via version column, HTTP 409 on conflict |
+| IX | Idempotency & Concurrency | PASS | Client-generated UUID idempotency keys on payment_requests row, status guard (`WHERE status = 'pending'`) for concurrency safety, HTTP 409 on conflict |
 
 **Gate result**: ALL PASS — proceed to Phase 0.
 

@@ -127,7 +127,6 @@ Create a new payment request.
     "share_url": "/r/abc123def456",
     "expires_at": "2026-04-15T00:00:00Z",
     "created_at": "2026-04-08T00:00:00Z",
-    "version": 1
   }
 }
 ```
@@ -182,8 +181,7 @@ List payment requests for the authenticated user.
       "share_url": "/r/abc123def456",
       "expires_at": "2026-04-15T00:00:00Z",
       "created_at": "2026-04-08T00:00:00Z",
-      "version": 1
-    }
+      }
   ]
 }
 ```
@@ -233,7 +231,7 @@ Pay a pending incoming request. Simulates 2-3 second processing delay.
 
 **Response 403**: User is not the recipient.
 
-**Response 409**: Concurrent modification (version mismatch or already actioned).
+**Response 409**: Concurrent modification (already actioned by another party).
 ```json
 {
   "error": "Request has already been modified. Please refresh.",
