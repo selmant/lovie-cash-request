@@ -42,6 +42,7 @@ The core domain object. Represents a money request from sender to recipient.
 | `note` | `TEXT` | NULLABLE | Optional message, max 500 chars |
 | `status` | `TEXT` | NOT NULL, DEFAULT 'pending' | One of: pending, paid, declined, cancelled |
 | `share_token` | `TEXT` | UNIQUE, NOT NULL | Cryptographically random, 22-char base64url |
+| `idempotency_key` | `TEXT` | NULLABLE | Client-generated UUID, set on terminal state transition |
 | `version` | `INTEGER` | NOT NULL, DEFAULT 1 | Optimistic locking counter |
 | `expires_at` | `TIMESTAMPTZ` | NOT NULL | creation + 7 days |
 | `created_at` | `TIMESTAMPTZ` | NOT NULL, DEFAULT now() | |
@@ -76,26 +77,6 @@ END AS display_status
 
 ---
 
-### idempotency_keys
-
-Prevents duplicate processing of state-mutating actions.
-
-| Column | Type | Constraints | Notes |
-|--------|------|-------------|-------|
-| `key` | `TEXT` | NOT NULL | Client-generated UUID |
-| `user_id` | `UUID` | FK → users(id), NOT NULL | |
-| `method` | `TEXT` | NOT NULL | HTTP method |
-| `path` | `TEXT` | NOT NULL | Request path |
-| `response_status` | `INTEGER` | NOT NULL | Cached response status |
-| `response_body` | `BYTEA` | NULLABLE | Cached response body |
-| `created_at` | `TIMESTAMPTZ` | NOT NULL, DEFAULT now() | |
-
-**Constraints**: `PRIMARY KEY (key, user_id)`
-
-**Retention**: Purge records older than 24 hours via periodic cleanup.
-
----
-
 ### sessions
 
 Managed by `alexedwards/scs` — table auto-created by scs PostgreSQL store.
@@ -113,7 +94,6 @@ Managed by `alexedwards/scs` — table auto-created by scs PostgreSQL store.
 ```
 users 1──────N payment_requests (as sender via sender_id)
 users 1──────N payment_requests (as recipient via recipient_id, nullable)
-users 1──────N idempotency_keys (via user_id)
 ```
 
 - A user can send many payment requests (outgoing)
@@ -149,11 +129,11 @@ users 1──────N idempotency_keys (via user_id)
 **SQL Guard Pattern**:
 ```sql
 UPDATE payment_requests
-SET status = $1, version = version + 1, updated_at = now()
+SET status = $1, idempotency_key = $4, version = version + 1, updated_at = now()
 WHERE id = $2
   AND status = 'pending'
   AND expires_at > now()
   AND version = $3
 RETURNING *;
 ```
-If 0 rows returned: check current state to determine appropriate error (409 Conflict, 410 Gone/expired, 404 Not Found).
+If 0 rows returned: check if `idempotency_key = $4` on current row → return current state (idempotent success). Otherwise determine appropriate error (409 Conflict, 410 Gone/expired, 404 Not Found).

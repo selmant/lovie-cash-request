@@ -17,12 +17,11 @@
 - **Rationale**: Write SQL queries with annotations in `queries/` dir, sqlc generates Go structs and functions. Schema sourced from migration files. Zero runtime overhead — all generation happens at build time.
 - **Configuration**: `sqlc.yaml` at backend root, pointing to `internal/db/queries/` and `internal/db/migrations/`
 
-### 3. Idempotency — Same-DB Table
+### 3. Idempotency — Column on payment_requests
 
-- **Decision**: Store idempotency records in PostgreSQL `idempotency_keys` table
-- **Schema**: `(key TEXT PRIMARY KEY, user_id UUID NOT NULL, method TEXT, path TEXT, response_status INT, response_body BYTEA, created_at TIMESTAMPTZ)` with unique constraint on `(key, user_id)`
-- **Rationale**: Same-DB storage lets idempotency check + business mutation run in a single transaction, guaranteeing atomicity. 24h retention with periodic cleanup (`DELETE WHERE created_at < now() - interval '24 hours'`). No Redis needed for prototype traffic.
-- **Alternatives considered**: Redis-based store (unnecessary complexity), longer retention (wasteful)
+- **Decision**: Store `idempotency_key` directly on the `payment_requests` row, set during the terminal state transition
+- **Rationale**: Only one mutation can ever succeed per request (FSM guarantees pending → single terminal state). A single column is sufficient — no separate table, no cleanup goroutine, no response caching middleware. On duplicate request: if `idempotency_key` matches, return current state as success; otherwise 409.
+- **Alternatives considered**: Separate `idempotency_keys` table with response caching (overkill for 3 actions on one entity), Redis-based store (unnecessary complexity)
 
 ### 4. Optimistic Locking — Version Column
 
