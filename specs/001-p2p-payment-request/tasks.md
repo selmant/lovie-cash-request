@@ -70,14 +70,14 @@
 
 ### Implementation for User Story 5
 
-- [ ] T025 [P] [US5] Add sqlc queries for user lookup by email, phone, and id; user creation; bulk recipient resolution (UPDATE payment_requests SET recipient_id WHERE recipient_email/phone match) in `backend/internal/db/queries/users.sql`
-- [ ] T026 [US5] Implement auth service in `backend/internal/service/auth.go` (signup with email validation + phone E.164 validation, login by email, session create/destroy, recipient resolution on login)
-- [ ] T027 [US5] Implement auth HTTP handlers in `backend/internal/api/auth.go` (POST /api/auth/signup, POST /api/auth/login, POST /api/auth/logout, GET /api/auth/me per contracts/api.md)
-- [ ] T028 [US5] Implement auth middleware (require-auth, inject user into context) in `backend/internal/api/middleware.go`
-- [ ] T029 [P] [US5] Create useAuth hook with context provider in `frontend/src/hooks/useAuth.ts` (GET /api/auth/me on mount, signup, login, logout methods)
-- [ ] T030 [US5] Create auth page with email + phone fields, "Log in" and "Sign up" buttons, inline validation in `frontend/src/routes/auth/AuthPage.tsx`
-- [ ] T031 [US5] Create AuthLayout wrapper that checks auth state, redirects to /login?redirect=<path> if unauthenticated in `frontend/src/routes/auth/AuthLayout.tsx`
-- [ ] T032 [US5] Create persistent app header with nav links (Dashboard, New Request), theme toggle placeholder, and logout button showing user email in `frontend/src/components/Header.tsx`
+- [X] T025 [P] [US5] Add sqlc queries for user lookup by email, phone, and id; user creation; bulk recipient resolution (UPDATE payment_requests SET recipient_id WHERE recipient_email/phone match) in `backend/internal/db/queries/users.sql`
+- [X] T026 [US5] Implement auth service in `backend/internal/service/auth.go` (signup with email validation + phone E.164 validation, login by email, session create/destroy, recipient resolution on login)
+- [X] T027 [US5] Implement auth HTTP handlers in `backend/internal/api/auth.go` (POST /api/auth/signup, POST /api/auth/login, POST /api/auth/logout, GET /api/auth/me per contracts/api.md)
+- [X] T028 [US5] Implement auth middleware (require-auth, inject user into context) in `backend/internal/api/middleware.go`
+- [X] T029 [P] [US5] Create useAuth hook with context provider in `frontend/src/hooks/useAuth.ts` (GET /api/auth/me on mount, signup, login, logout methods)
+- [X] T030 [US5] Create auth page with email + phone fields, "Log in" and "Sign up" buttons, inline validation in `frontend/src/routes/auth/AuthPage.tsx`
+- [X] T031 [US5] Create AuthLayout wrapper that checks auth state, redirects to /login?redirect=<path> if unauthenticated in `frontend/src/routes/auth/AuthLayout.tsx`
+- [X] T032 [US5] Create persistent app header with nav links (Dashboard, New Request), theme toggle placeholder, and logout button showing user email in `frontend/src/components/Header.tsx`
 
 **Checkpoint**: Auth works end-to-end. Users can sign up, log in, log out. All routes behind auth guard.
 
