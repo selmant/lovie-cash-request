@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function AuthLayout() {
-  const { user, loading } = useAuth();
+  const { user, loading, didLogout } = useAuth();
   const location = useLocation();
   const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
 
@@ -19,7 +19,8 @@ export function AuthLayout() {
   }
 
   if (!user) {
-    return <Navigate to={`/login?redirect=${encodeURIComponent(redirectTarget)}`} replace />;
+    const to = didLogout ? "/login" : `/login?redirect=${encodeURIComponent(redirectTarget)}`;
+    return <Navigate to={to} replace />;
   }
 
   return <Outlet />;

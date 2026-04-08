@@ -82,10 +82,17 @@ export function Component() {
       toast.success(`Request ${labels[action].toLowerCase()}!`);
     } catch (err) {
       if (err instanceof ApiRequestError) {
-        if (err.code === "CONFLICT") toast.error("Request has already been modified. Please refresh.");
-        else if (err.code === "EXPIRED") toast.error("This request has expired.");
-        else if (err.code === "RATE_LIMITED") toast.error("Too many requests. Please try again later.");
-        else toast.error(err.message);
+        if (err.code === "CONFLICT") {
+          toast.error("Request has already been modified. Please refresh.");
+          fetchRequest();
+        } else if (err.code === "EXPIRED") {
+          toast.error("This request has expired.");
+          fetchRequest();
+        } else if (err.code === "RATE_LIMITED") {
+          toast.error("Too many requests. Please try again later.");
+        } else {
+          toast.error(err.message);
+        }
       } else {
         toast.error("An unexpected error occurred");
       }
@@ -128,7 +135,7 @@ export function Component() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Payment Request</CardTitle>
-          <Badge variant={statusVariant(request.status)}>
+          <Badge aria-label="Request status" variant={statusVariant(request.status)}>
             {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
           </Badge>
         </div>

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -16,8 +15,8 @@ import (
 )
 
 var (
-	ErrInvalidAmount      = errors.New("amount must be between $0.01 and $10,000.00")
-	ErrInvalidAmountFormat = errors.New("amount must have exactly 2 decimal places")
+	ErrInvalidAmount       = errors.New("amount must be between $0.01 and $10,000.00")
+	ErrInvalidAmountFormat = errors.New("amount must have at most 2 decimal places")
 	ErrRecipientRequired  = errors.New("recipient email or phone is required")
 	ErrSelfRequest        = errors.New("you cannot request money from yourself")
 	ErrNoteLengthExceeded = errors.New("note must be 500 characters or fewer")
@@ -63,9 +62,8 @@ func (s *RequestService) Create(ctx context.Context, input CreateRequestInput) (
 		}
 	}
 
-	phoneRegexLocal := regexp.MustCompile(`^\+[1-9]\d{1,14}$`)
 	if recipientPhone != "" {
-		if !phoneRegexLocal.MatchString(recipientPhone) {
+		if !phoneRegex.MatchString(recipientPhone) {
 			details["recipient_phone"] = "Invalid phone format (must be E.164, e.g. +14155551234)"
 		}
 	}
@@ -145,9 +143,11 @@ func parseAmount(s string) (int32, error) {
 		return 0, ErrInvalidAmount
 	}
 
-	// Must have exactly 2 decimal places
 	parts := strings.Split(s, ".")
-	if len(parts) != 2 || len(parts[1]) != 2 {
+	if len(parts) > 2 {
+		return 0, ErrInvalidAmount
+	}
+	if len(parts) == 2 && len(parts[1]) > 2 {
 		return 0, ErrInvalidAmountFormat
 	}
 

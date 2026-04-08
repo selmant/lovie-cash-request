@@ -104,5 +104,6 @@ WHERE (pr.recipient_id = $1 OR pr.recipient_email = $2 OR pr.recipient_phone = $
        END)
   AND (sqlc.narg('search')::text IS NULL OR
        COALESCE(s.email, '') ILIKE '%' || sqlc.narg('search')::text || '%' OR
+       COALESCE(s.phone, '') ILIKE '%' || sqlc.narg('search')::text || '%' OR
        COALESCE(s.display_name, '') ILIKE '%' || sqlc.narg('search')::text || '%')
 ORDER BY pr.created_at DESC;

@@ -54,7 +54,7 @@ export function Component() {
         </Button>
       </div>
 
-      <Tabs value={direction} onValueChange={(v) => setDirection(v as "outgoing" | "incoming")}>
+      <Tabs value={direction} onValueChange={(v) => { setDirection(v as "outgoing" | "incoming"); setStatus("all"); setSearch(""); }}>
         <TabsList>
           <TabsTrigger value="outgoing">Outgoing</TabsTrigger>
           <TabsTrigger value="incoming">Incoming</TabsTrigger>
@@ -118,7 +118,10 @@ export function Component() {
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="font-semibold">{req.amount_display}</span>
-                    <Badge variant={statusVariant(req.status)}>
+                    <Badge
+                      aria-label={`Request status ${req.status}`}
+                      variant={statusVariant(req.status)}
+                    >
                       {req.status.charAt(0).toUpperCase() + req.status.slice(1)}
                     </Badge>
                   </div>

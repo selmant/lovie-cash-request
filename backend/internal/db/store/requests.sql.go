@@ -242,6 +242,7 @@ WHERE (pr.recipient_id = $1 OR pr.recipient_email = $2 OR pr.recipient_phone = $
        END)
   AND ($5::text IS NULL OR
        COALESCE(s.email, '') ILIKE '%' || $5::text || '%' OR
+       COALESCE(s.phone, '') ILIKE '%' || $5::text || '%' OR
        COALESCE(s.display_name, '') ILIKE '%' || $5::text || '%')
 ORDER BY pr.created_at DESC
 `

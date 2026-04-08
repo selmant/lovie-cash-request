@@ -5,6 +5,7 @@ import type { User, UserResponse, CSRFResponse } from "@/types";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  didLogout: boolean;
   signup: (email: string, phone: string) => Promise<void>;
   login: (email: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -21,6 +22,7 @@ export function useAuth() {
 export function useAuthProvider() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [didLogout, setDidLogout] = useState(false);
 
   useEffect(() => {
     // Fetch CSRF token first, then check auth
@@ -44,10 +46,11 @@ export function useAuthProvider() {
 
   const logout = useCallback(async () => {
     await api.post("/auth/logout");
+    setDidLogout(true);
     setUser(null);
   }, []);
 
-  return { user, loading, signup, login, logout };
+  return { user, loading, didLogout, signup, login, logout };
 }
 
 export function isApiError(err: unknown): err is ApiRequestError {

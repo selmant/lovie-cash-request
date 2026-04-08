@@ -21,7 +21,7 @@ var (
 
 var (
 	emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
-	phoneRegex = regexp.MustCompile(`^\+[1-9]\d{1,14}$`)
+	phoneRegex = regexp.MustCompile(`^\+[1-9]\d{6,14}$`)
 )
 
 type AuthService struct {
