@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function AuthLayout() {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const redirectTarget = `${location.pathname}${location.search}${location.hash}`;
 
   if (loading) {
     return (
@@ -18,7 +19,7 @@ export function AuthLayout() {
   }
 
   if (!user) {
-    return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />;
+    return <Navigate to={`/login?redirect=${encodeURIComponent(redirectTarget)}`} replace />;
   }
 
   return <Outlet />;

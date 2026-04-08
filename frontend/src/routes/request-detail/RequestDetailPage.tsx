@@ -227,9 +227,13 @@ export function Component() {
         )}
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Shareable Link</label>
+          <label htmlFor="shareable-link" className="text-sm font-medium">
+            Shareable Link
+          </label>
           <div className="flex gap-2">
             <input
+              id="shareable-link"
+              aria-label="Shareable Link"
               readOnly
               value={shareUrl}
               className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm"

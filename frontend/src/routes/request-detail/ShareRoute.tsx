@@ -9,13 +9,14 @@ export function Component() {
   const { token } = useParams<{ token: string }>();
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [requestId, setRequestId] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
-    if (!user) return; // Will redirect to login
-    if (!token) return;
+    if (!user || !token) return;
+
+    setLoading(true);
 
     api
       .get<RequestResponse>(`/requests/by-token/${token}`)
@@ -28,7 +29,7 @@ export function Component() {
       .finally(() => setLoading(false));
   }, [token, user, authLoading, navigate]);
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Skeleton className="h-64 w-full max-w-md" />
@@ -38,6 +39,14 @@ export function Component() {
 
   if (!user) {
     return <Navigate to={`/login?redirect=/r/${token}`} replace />;
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Skeleton className="h-64 w-full max-w-md" />
+      </div>
+    );
   }
 
   if (requestId) {

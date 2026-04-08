@@ -199,9 +199,19 @@ func (s *Server) handleGetRequest() http.HandlerFunc {
 
 		// Auth check: sender or recipient only
 		userID := getUserID(r.Context())
-		if !isAuthorized(userID, row.SenderID, row.RecipientID, row.RecipientEmail, row.RecipientPhone, r) {
-			writeError(w, http.StatusForbidden, "Not authorized to view this request", "FORBIDDEN")
-			return
+		if !isAuthorized(userID, row.SenderID, row.RecipientID) {
+			user, uerr := s.authService.GetUser(r.Context(), pgtype.UUID{Bytes: userID, Valid: true})
+			if uerr != nil {
+				writeError(w, http.StatusForbidden, "Not authorized to view this request", "FORBIDDEN")
+				return
+			}
+
+			emailMatch := row.RecipientEmail != nil && user.Email == *row.RecipientEmail
+			phoneMatch := row.RecipientPhone != nil && user.Phone != nil && *user.Phone == *row.RecipientPhone
+			if !emailMatch && !phoneMatch {
+				writeError(w, http.StatusForbidden, "Not authorized to view this request", "FORBIDDEN")
+				return
+			}
 		}
 
 		writeJSON(w, http.StatusOK, map[string]any{"request": toRequestJSONFromRow(row)})
@@ -369,14 +379,13 @@ func toRequestJSONFromIncomingRow(row store.ListIncomingRequestsRow) requestJSON
 	return rj
 }
 
-func isAuthorized(userID uuid.UUID, senderID, recipientID pgtype.UUID, recipientEmail, recipientPhone *string, r *http.Request) bool {
+func isAuthorized(userID uuid.UUID, senderID, recipientID pgtype.UUID) bool {
 	if userID == senderID.Bytes {
 		return true
 	}
 	if recipientID.Valid && userID == recipientID.Bytes {
 		return true
 	}
-	// TODO: could check email/phone match for unresolved recipients
 	return false
 }
 

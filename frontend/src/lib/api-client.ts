@@ -14,10 +14,11 @@ interface ApiError {
 export class ApiRequestError extends Error {
   constructor(
     public status: number,
+    message: string,
     public code: string,
     public details?: Record<string, string>,
   ) {
-    super();
+    super(message);
     this.name = "ApiRequestError";
   }
 }
@@ -40,7 +41,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
   if (!res.ok) {
     const err: ApiError = await res.json();
-    throw new ApiRequestError(res.status, err.code, err.details);
+    throw new ApiRequestError(res.status, err.error, err.code, err.details);
   }
 
   return res.json() as Promise<T>;
@@ -61,7 +62,7 @@ function requestWithIdempotency<T>(method: string, path: string, body?: unknown)
   }).then(async (res) => {
     if (!res.ok) {
       const err: ApiError = await res.json();
-      throw new ApiRequestError(res.status, err.code, err.details);
+      throw new ApiRequestError(res.status, err.error, err.code, err.details);
     }
     return res.json() as Promise<T>;
   });

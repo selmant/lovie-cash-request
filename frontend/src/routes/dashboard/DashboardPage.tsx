@@ -62,7 +62,7 @@ export function Component() {
 
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="w-full sm:w-40">
+            <SelectTrigger className="w-full sm:w-40" aria-label="Status filter">
               <SelectValue placeholder="Filter status" />
             </SelectTrigger>
             <SelectContent>
