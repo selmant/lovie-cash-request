@@ -130,13 +130,13 @@
 
 ### Implementation for User Story 3
 
-- [ ] T046 [P] [US3] Add sqlc queries for listing requests with filters (direction outgoing/incoming, status filter, search partial match on counterparty email/phone, ORDER BY created_at DESC) in `backend/internal/db/queries/requests.sql`
-- [ ] T047 [US3] Implement list service in `backend/internal/service/requests.go` (build filtered query, derive expired status for pending requests with expires_at < now())
-- [ ] T048 [US3] Implement list HTTP handler (GET /api/requests with query params: direction, status, search per contracts/api.md) in `backend/internal/api/requests.go`
-- [ ] T049 [US3] Create Dashboard page with Outgoing/Incoming tabs (shadcn Tabs), request table with columns (recipient/sender, amount, status badge, date, link to detail), skeleton loading in `frontend/src/routes/dashboard/DashboardPage.tsx`
-- [ ] T050 [US3] Add status filter dropdown (shadcn Select: All, Pending, Paid, Declined, Expired, Cancelled) and search input (partial email/phone match) to dashboard in `frontend/src/routes/dashboard/DashboardPage.tsx`
-- [ ] T051 [US3] Add empty state message "No requests match your filters" and mobile-responsive single-column layout in `frontend/src/routes/dashboard/DashboardPage.tsx`
-- [ ] T052 [US3] Wire Dashboard as the default authenticated route (/) in `frontend/src/App.tsx`
+- [X] T046 [P] [US3] Add sqlc queries for listing requests with filters (direction outgoing/incoming, status filter, search partial match on counterparty email/phone, ORDER BY created_at DESC) in `backend/internal/db/queries/requests.sql`
+- [X] T047 [US3] Implement list service in `backend/internal/service/requests.go` (build filtered query, derive expired status for pending requests with expires_at < now())
+- [X] T048 [US3] Implement list HTTP handler (GET /api/requests with query params: direction, status, search per contracts/api.md) in `backend/internal/api/requests.go`
+- [X] T049 [US3] Create Dashboard page with Outgoing/Incoming tabs (shadcn Tabs), request table with columns (recipient/sender, amount, status badge, date, link to detail), skeleton loading in `frontend/src/routes/dashboard/DashboardPage.tsx`
+- [X] T050 [US3] Add status filter dropdown (shadcn Select: All, Pending, Paid, Declined, Expired, Cancelled) and search input (partial email/phone match) to dashboard in `frontend/src/routes/dashboard/DashboardPage.tsx`
+- [X] T051 [US3] Add empty state message "No requests match your filters" and mobile-responsive single-column layout in `frontend/src/routes/dashboard/DashboardPage.tsx`
+- [X] T052 [US3] Wire Dashboard as the default authenticated route (/) in `frontend/src/App.tsx`
 
 **Checkpoint**: Dashboard fully functional with tabs, filters, and search. Mobile responsive. Empty states handled.
 
@@ -150,10 +150,10 @@
 
 ### Implementation for User Story 4
 
-- [ ] T053 [US4] Verify and refine expiration derivation in all sqlc queries (CASE WHEN status='pending' AND expires_at < now() THEN 'expired' ELSE status END) in `backend/internal/db/queries/requests.sql`
-- [ ] T054 [US4] Verify expiration guard in action service — confirm pay/decline/cancel check expires_at > now() before mutation, return 410 Gone if expired in `backend/internal/service/actions.go`
-- [ ] T055 [US4] Add expiration countdown component to Request Detail page (days when >24h, hours+minutes when <24h, "Expired" badge when past) in `frontend/src/routes/request-detail/RequestDetailPage.tsx`
-- [ ] T056 [US4] Ensure expired requests show no action buttons and display "This request has expired" on attempted actions via shareable link in `frontend/src/routes/request-detail/RequestDetailPage.tsx`
+- [X] T053 [US4] Verify and refine expiration derivation in all sqlc queries (CASE WHEN status='pending' AND expires_at < now() THEN 'expired' ELSE status END) in `backend/internal/db/queries/requests.sql`
+- [X] T054 [US4] Verify expiration guard in action service — confirm pay/decline/cancel check expires_at > now() before mutation, return 410 Gone if expired in `backend/internal/service/actions.go`
+- [X] T055 [US4] Add expiration countdown component to Request Detail page (days when >24h, hours+minutes when <24h, "Expired" badge when past) in `frontend/src/routes/request-detail/RequestDetailPage.tsx`
+- [X] T056 [US4] Ensure expired requests show no action buttons and display "This request has expired" on attempted actions via shareable link in `frontend/src/routes/request-detail/RequestDetailPage.tsx`
 
 **Checkpoint**: Expiration works end-to-end. Countdown displays correctly. Expired requests are fully locked.
 
