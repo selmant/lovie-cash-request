@@ -9,7 +9,7 @@ P2P payment request feature for a consumer fintech prototype. Users create money
 
 ## Technical Context
 
-**Language/Version**: Go 1.22+ (backend), TypeScript 5.x strict mode (frontend)  
+**Language/Version**: Go 1.26+ (backend), TypeScript 5.x strict mode (frontend)  
 **Primary Dependencies**: Chi router, sqlc, goose, scs (backend); React 19, Vite, React Router v7, shadcn/ui, TailwindCSS (frontend)  
 **Storage**: PostgreSQL (goose migrations, sqlc code generation)  
 **Testing**: `go test` + testify (backend unit/integration), Vitest (frontend unit), Playwright with video (E2E)  

@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Docker & Docker Compose
-- Go 1.22+ (for local backend development without Docker)
+- Go 1.26.1+ (for local backend development without Docker)
 - Node.js 20+ (for local frontend development without Docker)
 - pnpm (frontend package manager)
 

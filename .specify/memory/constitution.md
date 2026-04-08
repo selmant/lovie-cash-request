@@ -128,7 +128,7 @@ Conflict with a clear error message.
 
 ## Technical Constraints
 
-- **Backend**: Go 1.22+, Chi router (or stdlib `net/http`),
+- **Backend**: Go 1.26+, Chi router (or stdlib `net/http`),
   PostgreSQL, sqlc or GORM for data access
 - **Frontend**: TypeScript, React 19 + Vite, React Router,
   TailwindCSS, shadcn/ui

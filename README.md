@@ -43,7 +43,7 @@ Auth is mock (no password):
 
 ## Tech Stack
 
-- **Backend**: Go 1.22+, Chi router, sqlc, goose, scs sessions
+- **Backend**: Go 1.26.1+, Chi router, sqlc, goose, scs sessions
 - **Frontend**: React 19, Vite, TypeScript strict, TailwindCSS v4, shadcn/ui
 - **Database**: PostgreSQL 16
 - **Deployment**: Docker Compose
