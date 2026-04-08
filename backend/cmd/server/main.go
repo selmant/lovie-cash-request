@@ -14,6 +14,7 @@ import (
 	"github.com/pressly/goose/v3"
 	"github.com/selmant/cash-request/backend/internal/api"
 	"github.com/selmant/cash-request/backend/internal/config"
+	"github.com/selmant/cash-request/backend/internal/db/migrations"
 
 	// Import for goose migration driver
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -86,5 +87,6 @@ func runMigrations(databaseURL string) error {
 	}
 	defer db.Close()
 
-	return goose.Up(db, "internal/db/migrations")
+	goose.SetBaseFS(migrations.FS)
+	return goose.Up(db, ".")
 }
