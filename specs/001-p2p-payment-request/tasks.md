@@ -111,12 +111,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T040 [P] [US2] Add sqlc queries for status transitions (UPDATE with WHERE status='pending' AND expires_at > now(), idempotency_key check) and idempotency lookup in `backend/internal/db/queries/requests.sql`
-- [ ] T041 [US2] Implement action service in `backend/internal/service/actions.go` (pay with 2-3s simulated delay, decline, cancel; role checks — recipient for pay/decline, sender for cancel; idempotency check — if key matches return current state, else 409; expiration check before mutation)
-- [ ] T042 [US2] Implement action HTTP handlers in `backend/internal/api/requests.go` (POST /api/requests/{id}/pay, POST /api/requests/{id}/decline, POST /api/requests/{id}/cancel with Idempotency-Key header required, rate limiting applied)
-- [ ] T043 [US2] Add action buttons to Request Detail page: Pay and Decline for pending incoming requests, Cancel for pending outgoing requests, no buttons for terminal states in `frontend/src/routes/request-detail/RequestDetailPage.tsx`
-- [ ] T044 [US2] Add confirmation dialogs (AlertDialog) for Pay and Cancel actions; Decline executes immediately (FR-029) in `frontend/src/routes/request-detail/RequestDetailPage.tsx`
-- [ ] T045 [US2] Add toast notifications for action success/failure (Sonner), loading state for Pay (2-3s), error handling for 409 Conflict and 429 Rate Limit in `frontend/src/routes/request-detail/RequestDetailPage.tsx`
+- [X] T040 [P] [US2] Add sqlc queries for status transitions (UPDATE with WHERE status='pending' AND expires_at > now(), idempotency_key check) and idempotency lookup in `backend/internal/db/queries/requests.sql`
+- [X] T041 [US2] Implement action service in `backend/internal/service/actions.go` (pay with 2-3s simulated delay, decline, cancel; role checks — recipient for pay/decline, sender for cancel; idempotency check — if key matches return current state, else 409; expiration check before mutation)
+- [X] T042 [US2] Implement action HTTP handlers in `backend/internal/api/requests.go` (POST /api/requests/{id}/pay, POST /api/requests/{id}/decline, POST /api/requests/{id}/cancel with Idempotency-Key header required, rate limiting applied)
+- [X] T043 [US2] Add action buttons to Request Detail page: Pay and Decline for pending incoming requests, Cancel for pending outgoing requests, no buttons for terminal states in `frontend/src/routes/request-detail/RequestDetailPage.tsx`
+- [X] T044 [US2] Add confirmation dialogs (AlertDialog) for Pay and Cancel actions; Decline executes immediately (FR-029) in `frontend/src/routes/request-detail/RequestDetailPage.tsx`
+- [X] T045 [US2] Add toast notifications for action success/failure (Sonner), loading state for Pay (2-3s), error handling for 409 Conflict and 429 Rate Limit in `frontend/src/routes/request-detail/RequestDetailPage.tsx`
 
 **Checkpoint**: Full request lifecycle works. Pay shows loading simulation, decline is instant, cancel works for sender. Idempotency prevents double-processing. Concurrent conflicts shown as toast.
 

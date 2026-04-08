@@ -381,19 +381,83 @@ func isAuthorized(userID uuid.UUID, senderID, recipientID pgtype.UUID, recipient
 }
 
 func (s *Server) handlePayRequest() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		writeError(w, http.StatusNotImplemented, "Not implemented", "INTERNAL_ERROR")
-	}
+	return s.handleAction("pay")
 }
 
 func (s *Server) handleDeclineRequest() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		writeError(w, http.StatusNotImplemented, "Not implemented", "INTERNAL_ERROR")
-	}
+	return s.handleAction("decline")
 }
 
 func (s *Server) handleCancelRequest() http.HandlerFunc {
+	return s.handleAction("cancel")
+}
+
+func (s *Server) handleAction(action string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		writeError(w, http.StatusNotImplemented, "Not implemented", "INTERNAL_ERROR")
+		idStr := chi.URLParam(r, "id")
+		id, err := uuid.Parse(idStr)
+		if err != nil {
+			writeError(w, http.StatusNotFound, "Request not found", "NOT_FOUND")
+			return
+		}
+
+		idempotencyKey := r.Header.Get("Idempotency-Key")
+		if idempotencyKey == "" {
+			writeError(w, http.StatusBadRequest, "Idempotency-Key header is required", "VALIDATION_ERROR")
+			return
+		}
+
+		userID := getUserID(r.Context())
+		pgUserID := pgtype.UUID{Bytes: userID, Valid: true}
+		pgReqID := pgtype.UUID{Bytes: id, Valid: true}
+
+		user, err := s.authService.GetUser(r.Context(), pgUserID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Internal server error", "INTERNAL_ERROR")
+			return
+		}
+
+		input := service.ActionInput{
+			RequestID:      pgReqID,
+			UserID:         pgUserID,
+			UserEmail:      user.Email,
+			UserPhone:      user.Phone,
+			IdempotencyKey: idempotencyKey,
+		}
+
+		var result store.PaymentRequest
+		switch action {
+		case "pay":
+			result, err = s.actionService.Pay(r.Context(), input)
+		case "decline":
+			result, err = s.actionService.Decline(r.Context(), input)
+		case "cancel":
+			result, err = s.actionService.Cancel(r.Context(), input)
+		}
+
+		if err != nil {
+			switch {
+			case errors.Is(err, service.ErrNotRecipient), errors.Is(err, service.ErrNotSender):
+				writeError(w, http.StatusForbidden, err.Error(), "FORBIDDEN")
+			case errors.Is(err, service.ErrRequestExpired):
+				writeError(w, http.StatusGone, err.Error(), "EXPIRED")
+			case errors.Is(err, service.ErrConflict):
+				writeError(w, http.StatusConflict, err.Error(), "CONFLICT")
+			case errors.Is(err, service.ErrNotFound):
+				writeError(w, http.StatusNotFound, "Request not found", "NOT_FOUND")
+			default:
+				writeError(w, http.StatusInternalServerError, "Internal server error", "INTERNAL_ERROR")
+			}
+			return
+		}
+
+		// Re-fetch full row with joins for response
+		fullRow, err := s.queries.GetPaymentRequestByID(r.Context(), result.ID)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "Internal server error", "INTERNAL_ERROR")
+			return
+		}
+
+		writeJSON(w, http.StatusOK, map[string]any{"request": toRequestJSONFromRow(fullRow)})
 	}
 }
