@@ -130,8 +130,8 @@ pnpm format:check
 
 ## Multi-User Testing
 
-Since auth is mock email-based:
-1. Open browser tab 1 → login as `alice@example.com`
-2. Open browser tab 2 (incognito) → login as `bob@example.com`
-3. Alice creates a request for `bob@example.com`
+Since auth is mock (no password):
+1. Open browser tab 1 → sign up as `alice@example.com` with phone `+14155551111`
+2. Open browser tab 2 (incognito) → sign up as `bob@example.com` with phone `+14155552222`
+3. Alice creates a request for `bob@example.com` (or `+14155552222`)
 4. Bob sees the request in his incoming list

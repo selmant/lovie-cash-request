@@ -3,7 +3,7 @@
 **Base URL**: `/api`
 **Content-Type**: `application/json`
 **Auth**: Session cookie (set by login endpoint)
-**CSRF**: `X-CSRF-Token` header required on all state-changing endpoints
+**CSRF**: `X-CSRF-Token` header required on all state-changing endpoints (except `/api/auth/signup` and `/api/auth/login` — CSRF token is bootstrapped via `GET /api/csrf` before auth)
 
 ## Common Headers
 
@@ -28,9 +28,48 @@ Error codes: `VALIDATION_ERROR`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONF
 
 ## Authentication
 
+### POST /api/auth/signup
+
+Create a new user account and session.
+
+**Request**:
+```json
+{
+  "email": "user@example.com",
+  "phone": "+14155551234"
+}
+```
+
+- `email`: Required. Validated per RFC 5322.
+- `phone`: Optional. E.164 format.
+
+**Response 201**:
+```json
+{
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com",
+    "phone": "+14155551234",
+    "display_name": "user",
+    "created_at": "2026-04-08T00:00:00Z"
+  }
+}
+```
+Sets session cookie + CSRF cookie.
+
+**Response 400**: Invalid email or phone format.
+
+**Response 409**: Account already exists.
+```json
+{
+  "error": "Account already exists. Please log in.",
+  "code": "CONFLICT"
+}
+```
+
 ### POST /api/auth/login
 
-Create a session via mock email auth.
+Log in to an existing account.
 
 **Request**:
 ```json
@@ -45,7 +84,7 @@ Create a session via mock email auth.
   "user": {
     "id": "uuid",
     "email": "user@example.com",
-    "phone": null,
+    "phone": "+14155551234",
     "display_name": "user",
     "created_at": "2026-04-08T00:00:00Z"
   }
@@ -54,6 +93,14 @@ Create a session via mock email auth.
 Sets session cookie + CSRF cookie.
 
 **Response 400**: Invalid email format.
+
+**Response 404**: Account not found.
+```json
+{
+  "error": "Account not found. Please sign up.",
+  "code": "NOT_FOUND"
+}
+```
 
 ### POST /api/auth/logout
 

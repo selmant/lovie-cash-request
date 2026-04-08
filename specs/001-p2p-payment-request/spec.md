@@ -9,7 +9,7 @@
 
 ### Session 2026-04-08
 
-- Q: What is the maximum character length for the optional note? → A: 280 characters
+- Q: What is the maximum character length for the optional note? → A: 500 characters
 - Q: How should idempotency keys be stored and retained? → A: Column on `payment_requests` table (store the key that performed the state transition)
 - Q: How should errors be displayed to users? → A: Toast notifications for action errors (pay/decline/cancel failures, network errors) + inline validation for form fields
 
@@ -18,8 +18,9 @@
 ### User Story 1 - Create and View a Payment Request (Priority: P1)
 
 A user wants to request money from a friend. They navigate to the
-"New Request" form, enter the recipient's email, specify the
-amount, and optionally add a note (e.g., "Dinner last night").
+"New Request" form, enter the recipient's email or phone number,
+specify the amount, and optionally add a note (e.g., "Dinner last
+night").
 The system validates the inputs, creates the request, and provides
 a unique shareable link. The user can then see this request in
 their outgoing requests list.
@@ -35,8 +36,8 @@ valid shareable link.
 **Acceptance Scenarios**:
 
 1. **Given** a logged-in user on the New Request page,
-   **When** they enter a valid email, amount of $25.00, and
-   note "Lunch",
+   **When** they enter a valid recipient (email or phone), amount
+   of $25.00, and note "Lunch",
    **Then** the system creates a request with status "Pending",
    assigns a unique ID and shareable link, and redirects to the
    request detail view.
@@ -47,7 +48,8 @@ valid shareable link.
    create a request.
 
 3. **Given** a logged-in user on the New Request page,
-   **When** they enter an invalid email format (e.g., "notanemail"),
+   **When** they enter an invalid email format (e.g., "notanemail")
+   or an invalid phone format (e.g., "12345"),
    **Then** the system displays a validation error for the
    recipient field.
 
@@ -68,7 +70,8 @@ valid shareable link.
    "Amount must have at most 2 decimal places."
 
 7. **Given** a logged-in user on the New Request page,
-   **When** they enter their own email as the recipient,
+   **When** they enter their own email or phone number as the
+   recipient,
    **Then** the system rejects the request with an error
    "You cannot request money from yourself."
 
@@ -168,8 +171,8 @@ A user wants to manage all their payment requests from a single
 dashboard. The dashboard shows two sections: outgoing requests
 (sent by user) and incoming requests (received by user). Users
 can filter by status (Pending, Paid, Declined, Expired,
-Cancelled) and search by recipient or sender email. Requests are
-sorted by creation date, most recent first.
+Cancelled) and search by recipient or sender email or phone.
+Requests are sorted by creation date, most recent first.
 
 **Why this priority**: The dashboard aggregates all request data.
 It depends on US1 and US2 being functional first, and adds a
@@ -193,9 +196,10 @@ requests and searching by email narrows results correctly.
    **Then** only pending requests are displayed.
 
 3. **Given** a logged-in user on the dashboard,
-   **When** they type a recipient's email in the search bar,
+   **When** they type a recipient's email or phone in the search
+   bar,
    **Then** the list filters to show only requests matching that
-   email (partial match).
+   email or phone (partial match).
 
 4. **Given** a logged-in user on the dashboard,
    **When** they combine a status filter with a search term,
@@ -270,41 +274,67 @@ past 7 days (or seed an old request), and verify the status shows
 ### User Story 5 - User Authentication (Priority: P1)
 
 Users must authenticate before accessing any feature. The system
-uses simple email-based mock authentication — a user enters their
-email and is immediately logged in (no password, no magic link
-verification in this prototype). This enables multi-user testing
-where different browser sessions represent different users.
+uses simple mock authentication — no password, no magic link
+verification in this prototype. The auth page presents email
+(required) and phone (optional) fields with two buttons: "Log in"
+(for existing accounts) and "Sign up" (for new accounts). This
+enables multi-user testing where different browser sessions
+represent different users. The phone number is stored on the user
+profile so that incoming requests sent to that phone can be
+matched to the user.
 
 **Why this priority**: Authentication is a prerequisite for all
 other stories — the system must know who the sender and recipient
 are.
 
-**Independent Test**: Enter an email on the login page, verify
-redirect to dashboard, and confirm the session persists across
-page navigation.
+**Independent Test**: Sign up with an email and phone, log out,
+log back in with the same email, verify redirect to dashboard and
+session persistence.
 
 **Acceptance Scenarios**:
 
 1. **Given** an unauthenticated user visiting any page,
    **When** the page loads,
-   **Then** they are redirected to the login page. If the original
+   **Then** they are redirected to the auth page. If the original
    URL was a shareable link or specific page, it is preserved as
    a redirect target (e.g., `/login?redirect=/r/abc123`).
 
-2. **Given** a user on the login page,
-   **When** they enter a valid email and submit,
-   **Then** they are logged in, a session is created, and they
-   are redirected to the dashboard (or to the preserved redirect
+2. **Given** a new user on the auth page,
+   **When** they enter an email (and optionally a phone number)
+   and click "Sign up",
+   **Then** a new user account is created with that email and
+   phone, a session is created, and they are redirected to the
+   dashboard (or to the preserved redirect target if one exists).
+
+3. **Given** a user on the auth page,
+   **When** they click "Sign up" with an email that already exists,
+   **Then** the system displays an error "Account already exists.
+   Please log in."
+
+4. **Given** a returning user on the auth page,
+   **When** they enter their email and click "Log in",
+   **Then** they are logged in to the existing account and
+   redirected to the dashboard (or to the preserved redirect
    target if one exists).
 
-3. **Given** a logged-in user,
+5. **Given** a user on the auth page,
+   **When** they click "Log in" with an email that does not exist,
+   **Then** the system displays an error "Account not found.
+   Please sign up."
+
+6. **Given** a logged-in user,
    **When** they click "Log out",
    **Then** the session is destroyed and they are redirected to
-   the login page.
+   the auth page.
 
-4. **Given** a logged-in user,
+7. **Given** a logged-in user,
    **When** they navigate between pages,
    **Then** their session persists and they remain authenticated.
+
+8. **Given** a user on the auth page,
+   **When** they enter an invalid phone format (not E.164),
+   **Then** the system displays a validation error for the phone
+   field. Email remains required; phone is optional.
 
 ---
 
@@ -312,12 +342,12 @@ page navigation.
 
 - What happens when a user requests money from their own email?
   System MUST reject self-requests with a clear error message.
-  The check compares the sender's email against the recipient
-  email field at creation time.
+  The check compares the sender's email and phone against the
+  recipient email and phone fields at creation time.
 - What happens when a recipient is not a registered user?
-  The request is created with the recipient's email. When that
-  person registers and logs in with the same email, they see the
-  pending request in their incoming list (matched by email).
+  The request is created with the recipient's email or phone. When
+  that person registers and logs in with a matching email or phone,
+  they see the pending request in their incoming list.
 - What happens if the server is unreachable during "Pay" action?
   The frontend displays an error toast and does not change the
   request status. The user can retry with the same idempotency
@@ -340,20 +370,24 @@ page navigation.
 ### Functional Requirements
 
 - **FR-001**: System MUST allow authenticated users to create
-  payment requests by specifying a recipient email, amount (in
-  USD), and an optional note.
+  payment requests by specifying a recipient email or phone number,
+  amount (in USD), and an optional note.
 - **FR-002**: System MUST validate that the amount is greater than
   $0.00, does not exceed $10,000.00, and has at most 2 decimal
   places. Amounts with more than 2 decimal places MUST be
   rejected (no silent rounding).
-- **FR-003**: System MUST validate recipient contact format as a
-  valid email address per RFC 5322.
+- **FR-003**: System MUST validate recipient contact format: email
+  per RFC 5322, phone per E.164 format. The "New Request" form
+  presents a single "Recipient" input field. The system
+  auto-detects the format: values starting with "+" are validated
+  as phone (E.164); all others are validated as email.
 - **FR-004**: System MUST reject requests where the sender's email
-  matches the recipient email field (self-request prevention).
+  or phone matches the recipient email or phone field (self-request
+  prevention).
 - **FR-005**: System MUST generate a unique shareable link for
   each payment request using a cryptographically random token.
 - **FR-005a**: System MUST validate that the optional note does not
-  exceed 280 characters. Notes exceeding this limit MUST be rejected
+  exceed 500 characters. Notes exceeding this limit MUST be rejected
   with an inline validation error.
 - **FR-006**: System MUST store amounts as integer cents internally
   to avoid floating-point precision errors.
@@ -363,7 +397,7 @@ page navigation.
 - **FR-008**: System MUST support filtering requests by status:
   Pending, Paid, Declined, Expired, Cancelled.
 - **FR-009**: System MUST support searching requests by
-  recipient/sender email (partial match).
+  recipient/sender email or phone (partial match).
 - **FR-010**: System MUST display request details including amount,
   note, sender info, recipient info, creation timestamp, and
   current status.
@@ -378,10 +412,10 @@ page navigation.
   MUST include a client-generated idempotency key (UUID) in the
   request header. Duplicate requests with the same idempotency
   key MUST return the same result without side effects.
-- **FR-015**: System MUST update request status atomically using
-  optimistic locking. Both sender and recipient dashboards
-  reflect the updated status on their next page load or
-  navigation.
+- **FR-015**: System MUST update request status atomically using a
+  status-guard transition (`WHERE status = 'pending'`). Both
+  sender and recipient dashboards reflect the updated status on
+  their next page load or navigation.
 - **FR-016**: System MUST treat pending requests as expired when
   their `expires_at` timestamp (creation + 7 days) is in the
   past. Expiration is derived at query time — no background
@@ -392,16 +426,40 @@ page navigation.
 - **FR-018**: System MUST block pay/decline/cancel actions on
   expired requests by checking `expires_at` before processing
   any state mutation.
-- **FR-019**: System MUST provide email-based mock authentication
-  (email entry, session creation, logout).
+- **FR-019**: System MUST provide mock authentication with email
+  (required) and phone number (optional, E.164 format). On login,
+  email and phone are stored on the user profile. Session creation
+  and logout are supported.
 - **FR-020**: System MUST redirect unauthenticated users to the
   login page, preserving the original URL as a redirect target
   so users return to their intended page after login.
 - **FR-021**: System MUST work responsively on mobile (320px+)
   and desktop (1024px+) viewports.
+- **FR-021a**: System MUST default to dark theme using
+  shadcn/ui's built-in dark mode support. A light/dark toggle
+  MUST be accessible in the page header. Preference MUST persist
+  across sessions via localStorage.
+- **FR-026**: System MUST provide a persistent header on all
+  authenticated pages containing: app name/logo, navigation links
+  (Dashboard, New Request), light/dark theme toggle, and a Log out
+  button showing the current user's email.
+- **FR-027**: After creating a payment request, the detail view
+  MUST display the shareable link in a read-only text field with a
+  "Copy" button. Clicking "Copy" copies the link to the clipboard
+  and shows a brief "Copied!" confirmation.
+- **FR-028**: System MUST show skeleton loading states (using
+  shadcn/ui Skeleton components) while pages and data are loading.
+  Dashboard tables, request detail views, and any async data
+  fetches MUST display skeletons until content is ready.
+- **FR-029**: Pay and Cancel actions MUST show a confirmation
+  dialog (shadcn/ui AlertDialog) before executing. Decline MUST
+  execute immediately without confirmation (low-risk action).
+- **FR-030**: The amount input MUST display a "$" prefix and
+  accept only numeric input with up to 2 decimal places. No
+  auto-formatting while typing — validation occurs on submit.
 - **FR-022**: System MUST return HTTP 409 Conflict when concurrent
-  state mutations are detected on the same request (optimistic
-  locking violation).
+  state mutations are detected on the same request (status-guard
+  conflict).
 - **FR-023**: System MUST enforce CSRF protection on all
   state-changing endpoints (create, pay, decline, cancel, login,
   logout).
@@ -417,19 +475,18 @@ page navigation.
 ### Key Entities
 
 - **User**: Represents an authenticated person. Key attributes:
-  unique ID, email, display name (derived from email), creation
-  timestamp. A user can be both a sender and recipient across
-  different requests.
+  unique ID, email, phone (optional, E.164 format), display name
+  (derived from email), creation timestamp. A user can be both a
+  sender and recipient across different requests.
 - **PaymentRequest**: The core domain object. Key attributes:
   unique ID, sender (user reference), recipient email, recipient
   user (resolved when a user with matching email registers or
-  logs in), amount in cents, note (optional, max 280 characters),
+  logs in), amount in cents, note (optional, max 500 characters),
   status (Pending,
   Paid, Declined, Cancelled — note: "Expired" is not stored but
   derived at query time from `expires_at`), shareable token
   (cryptographically random), creation timestamp, expiration
-  timestamp (`expires_at` = creation + 7 days), version (integer,
-  incremented on each state mutation for optimistic locking),
+  timestamp (`expires_at` = creation + 7 days),
   idempotency key (string, stores the client-generated UUID that
   performed the most recent state transition — used to detect
   duplicate requests).
@@ -477,20 +534,20 @@ AND expires_at > now() before allowing any transition.
 ## Assumptions
 
 - Users have stable internet connectivity (no offline mode).
-- The application operates in USD only — no multi-currency
-  support.
-- "Mock auth" means entering an email immediately logs the user
-  in. No password, no email verification, no magic link delivery.
-  This is sufficient for the prototype to demonstrate multi-user
-  flows.
-- Recipients are identified by email only. Phone number support
-  is excluded from this prototype because users authenticate by
-  email — a phone-number recipient could never be resolved to a
-  user account.
+- "Mock auth" means entering an email (required) and optionally a
+  phone number immediately logs the user in. No password, no email
+  verification, no magic link delivery. The phone is stored on the
+  user profile for recipient matching. This is sufficient for the
+  prototype to demonstrate multi-user flows.
+- Recipients can be identified by email or phone number (E.164
+  format). At least one must be provided. When a recipient
+  registers/logs in, their pending requests are resolved by
+  matching email or phone to their account.
 - A recipient who is not yet registered will have their request
   waiting for them upon registration. The system matches by
-  email: when a new user logs in, any PaymentRequest with a
-  matching `recipient_email` is linked to their account. No push
+  email or phone: when a new user logs in, any PaymentRequest
+  with a matching `recipient_email` or `recipient_phone` is
+  linked to their account. No push
   notification or email notification is sent (out of scope).
 - The payment simulation does not interact with any real payment
   processor — it is a timed delay followed by a status update.

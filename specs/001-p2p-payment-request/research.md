@@ -76,6 +76,6 @@
 ### 11. E2E Testing — Playwright with Video
 
 - **Decision**: Playwright with `video: "on"` in config
-- **Key config**: `use: { video: "on" }` in `playwright.config.ts`. Videos saved per-test in `test-results/`. Optional `video: { mode: "on", size: { width: 1280, height: 720 } }` for consistent sizing. `trace: "retain-on-failure"` for debugging.
+- **Key config**: `use: { video: "on" }` in `playwright.config.ts`. Videos saved per-test in `test-results/`. Optional `video: { mode: "on", size: { width: 1500, height: 720 } }` for consistent sizing. `trace: "retain-on-failure"` for debugging.
 - **Rationale**: `"on"` keeps all recordings — needed for submission demo. Playwright is the specified E2E tool.
 - **Alternatives considered**: Cypress (heavier), OS-level screen capture (fragile)
