@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -21,31 +22,33 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		slog.Error("fatal", "error", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
 	cfg, err := config.Load()
 	if err != nil {
-		slog.Error("failed to load config", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("loading config: %w", err)
 	}
 
 	ctx := context.Background()
 
 	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
-		slog.Error("failed to connect to database", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("connecting to database: %w", err)
 	}
 	defer pool.Close()
 
 	if err := pool.Ping(ctx); err != nil {
-		slog.Error("failed to ping database", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("pinging database: %w", err)
 	}
 	slog.Info("connected to database")
 
-	// Run migrations
 	if err := runMigrations(cfg.DatabaseURL); err != nil {
-		slog.Error("failed to run migrations", "error", err)
-		os.Exit(1)
+		return fmt.Errorf("running migrations: %w", err)
 	}
 
 	sessionStore := pgxstore.New(pool)
@@ -53,31 +56,38 @@ func main() {
 	server := api.NewServer(pool, sessionStore, cfg.CORSOrigin, !cfg.IsDevelopment())
 
 	httpServer := &http.Server{
-		Addr:    ":" + cfg.Port,
-		Handler: server,
+		Addr:              ":" + cfg.Port,
+		Handler:           server,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	// Graceful shutdown
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
 
+	errCh := make(chan error, 1)
 	go func() {
 		slog.Info("server starting", "port", cfg.Port)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			slog.Error("server error", "error", err)
-			os.Exit(1)
+			errCh <- err
 		}
 	}()
 
-	<-done
+	select {
+	case err := <-errCh:
+		return fmt.Errorf("server error: %w", err)
+	case <-done:
+	}
+
 	slog.Info("shutting down...")
 
 	shutdownCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	if err := httpServer.Shutdown(shutdownCtx); err != nil {
-		slog.Error("shutdown error", "error", err)
+		return fmt.Errorf("shutdown error: %w", err)
 	}
+	return nil
 }
 
 func runMigrations(databaseURL string) error {
@@ -85,7 +95,7 @@ func runMigrations(databaseURL string) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	goose.SetBaseFS(migrations.FS)
 	return goose.Up(db, ".")

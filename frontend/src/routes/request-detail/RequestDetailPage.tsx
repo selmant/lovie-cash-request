@@ -36,7 +36,7 @@ function statusVariant(status: string) {
 }
 
 function ExpirationCountdown({ expiresAt }: { expiresAt: string }) {
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 60000);

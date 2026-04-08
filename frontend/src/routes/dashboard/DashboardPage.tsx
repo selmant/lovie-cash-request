@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
 import { api } from "@/lib/api-client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,21 +29,19 @@ export function Component() {
   const [search, setSearch] = useState("");
   const [requests, setRequests] = useState<PaymentRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const fetchIdRef = useRef(0);
 
-  const fetchRequests = useCallback(() => {
-    setLoading(true);
+  useEffect(() => {
+    const id = ++fetchIdRef.current;
     const params = new URLSearchParams({ direction });
     if (status !== "all") params.set("status", status);
     if (search) params.set("search", search);
 
     api
       .get<RequestListResponse>(`/requests?${params}`)
-      .then((res) => setRequests(res.requests))
-      .catch(() => setRequests([]))
-      .finally(() => setLoading(false));
+      .then((res) => { if (fetchIdRef.current === id) { setRequests(res.requests); setLoading(false); } })
+      .catch(() => { if (fetchIdRef.current === id) { setRequests([]); setLoading(false); } });
   }, [direction, status, search]);
-
-  useEffect(() => { fetchRequests(); }, [fetchRequests]);
 
   return (
     <div className="space-y-4">

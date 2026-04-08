@@ -60,7 +60,11 @@ func (s *AuthService) Signup(ctx context.Context, input SignupInput) (store.User
 		return store.User{}, fmt.Errorf("checking existing user: %w", err)
 	}
 
-	displayName := email[:strings.Index(email, "@")]
+	atIdx := strings.Index(email, "@")
+	if atIdx < 0 {
+		return store.User{}, ErrInvalidEmail
+	}
+	displayName := email[:atIdx]
 
 	user, err := s.queries.CreateUser(ctx, store.CreateUserParams{
 		Email:       email,

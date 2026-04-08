@@ -6,6 +6,7 @@ import "./index.css";
 
 initTheme();
 
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- root element always exists in index.html
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <App />
