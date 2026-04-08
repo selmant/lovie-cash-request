@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getTheme, setTheme } from "@/lib/theme";
+import { Moon, Sun } from "lucide-react";
 
 export function Component() {
   const { signup, login } = useAuth();
@@ -45,8 +47,20 @@ export function Component() {
     }
   };
 
+  const [dark, setDark] = useState(getTheme() === "dark");
+  const toggleTheme = () => {
+    const next = dark ? "light" : "dark";
+    setTheme(next);
+    setDark(!dark);
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="absolute top-4 right-4">
+        <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+          {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </Button>
+      </div>
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Cash Request</CardTitle>
