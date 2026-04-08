@@ -91,13 +91,13 @@
 
 ### Implementation for User Story 1
 
-- [ ] T033 [P] [US1] Add sqlc queries for payment request creation (INSERT with share_token, expires_at = created_at + 7 days) and retrieval by share_token in `backend/internal/db/queries/requests.sql`
-- [ ] T034 [US1] Implement request service in `backend/internal/service/requests.go` (create with validation: amount >0 and <=1000000 cents, max 2 decimal places, email/phone format, self-request prevention FR-004, share_token generation via crypto/rand base64url 22 chars, note max 500 chars)
-- [ ] T035 [US1] Implement request HTTP handlers in `backend/internal/api/requests.go` (POST /api/requests, GET /api/requests/{id}, GET /api/requests/by-token/{share_token} with sender/recipient auth check per contracts/api.md)
-- [ ] T036 [P] [US1] Create New Request page with form (recipient input with auto-detect email vs phone, amount input with $ prefix, note textarea with 500 char counter) in `frontend/src/routes/new-request/NewRequestPage.tsx`
-- [ ] T037 [US1] Create Request Detail page (amount, note, sender/recipient info, status badge, shareable link in read-only field with Copy button, skeleton loading) in `frontend/src/routes/request-detail/RequestDetailPage.tsx`
-- [ ] T038 [US1] Create shareable link route that resolves /r/{token} via GET /api/requests/by-token/{token} and redirects to detail view in `frontend/src/routes/request-detail/ShareRoute.tsx`
-- [ ] T039 [US1] Wire New Request and Detail routes into React Router in `frontend/src/App.tsx`
+- [X] T033 [P] [US1] Add sqlc queries for payment request creation (INSERT with share_token, expires_at = created_at + 7 days) and retrieval by share_token in `backend/internal/db/queries/requests.sql`
+- [X] T034 [US1] Implement request service in `backend/internal/service/requests.go` (create with validation: amount >0 and <=1000000 cents, max 2 decimal places, email/phone format, self-request prevention FR-004, share_token generation via crypto/rand base64url 22 chars, note max 500 chars)
+- [X] T035 [US1] Implement request HTTP handlers in `backend/internal/api/requests.go` (POST /api/requests, GET /api/requests/{id}, GET /api/requests/by-token/{share_token} with sender/recipient auth check per contracts/api.md)
+- [X] T036 [P] [US1] Create New Request page with form (recipient input with auto-detect email vs phone, amount input with $ prefix, note textarea with 500 char counter) in `frontend/src/routes/new-request/NewRequestPage.tsx`
+- [X] T037 [US1] Create Request Detail page (amount, note, sender/recipient info, status badge, shareable link in read-only field with Copy button, skeleton loading) in `frontend/src/routes/request-detail/RequestDetailPage.tsx`
+- [X] T038 [US1] Create shareable link route that resolves /r/{token} via GET /api/requests/by-token/{token} and redirects to detail view in `frontend/src/routes/request-detail/ShareRoute.tsx`
+- [X] T039 [US1] Wire New Request and Detail routes into React Router in `frontend/src/App.tsx`
 
 **Checkpoint**: Users can create requests, view them, and share links. Shareable links work for sender and recipient (redirects to login if unauthenticated, 403 for unauthorized users).
 
