@@ -234,4 +234,198 @@ test.describe("request action scenarios", () => {
 
     await recipientContext.close();
   });
+
+  test("prevents sender from paying or declining their own request", async ({ page }) => {
+    const sender = makeUser("self-act-sender");
+    const recipient = makeUser("self-act-recipient");
+
+    await signup(page, sender);
+    const request = await createRequest(page, {
+      recipient: recipient.email,
+      amount: "20.00",
+      note: "Self-action test",
+    });
+
+    const payResponse = await postAction(page, request.id, "pay", randomUUID());
+    expect(payResponse.status).toBe(403);
+    expect(payResponse.body).toMatchObject({ code: "FORBIDDEN" });
+
+    const declineResponse = await postAction(page, request.id, "decline", randomUUID());
+    expect(declineResponse.status).toBe(403);
+    expect(declineResponse.body).toMatchObject({ code: "FORBIDDEN" });
+
+    await openRequest(page, request.id);
+    await expect(page.locator('[aria-label="Request status"]')).toHaveText(/Pending/);
+  });
+
+  test("prevents stranger from paying, declining, or cancelling a request", async ({
+    browser,
+    page,
+  }) => {
+    const sender = makeUser("stranger-sender");
+    const recipient = makeUser("stranger-recipient");
+    const stranger = makeUser("stranger-user");
+
+    const { context: strangerContext, page: strangerPage } = await newUserPage(browser);
+    await signup(page, sender);
+    await signup(strangerPage, stranger);
+
+    const request = await createRequest(page, {
+      recipient: recipient.email,
+      amount: "30.00",
+      note: "Stranger test",
+    });
+
+    const payResponse = await postAction(strangerPage, request.id, "pay", randomUUID());
+    expect(payResponse.status).toBe(403);
+    expect(payResponse.body).toMatchObject({ code: "FORBIDDEN" });
+
+    const declineResponse = await postAction(strangerPage, request.id, "decline", randomUUID());
+    expect(declineResponse.status).toBe(403);
+    expect(declineResponse.body).toMatchObject({ code: "FORBIDDEN" });
+
+    const cancelResponse = await postAction(strangerPage, request.id, "cancel", randomUUID());
+    expect(cancelResponse.status).toBe(403);
+    expect(cancelResponse.body).toMatchObject({ code: "FORBIDDEN" });
+
+    await strangerContext.close();
+  });
+
+  test("prevents recipient from cancelling a request", async ({ browser, page }) => {
+    const sender = makeUser("recip-cancel-sender");
+    const recipient = makeUser("recip-cancel-recipient");
+
+    const { context: recipientContext, page: recipientPage } = await newUserPage(browser);
+    await signup(page, sender);
+    await signup(recipientPage, recipient);
+
+    const request = await createRequest(page, {
+      recipient: recipient.email,
+      amount: "22.00",
+      note: "Recipient cancel test",
+    });
+
+    const cancelResponse = await postAction(recipientPage, request.id, "cancel", randomUUID());
+    expect(cancelResponse.status).toBe(403);
+    expect(cancelResponse.body).toMatchObject({ code: "FORBIDDEN" });
+
+    await openRequest(recipientPage, request.id);
+    await expect(recipientPage.getByRole("button", { name: "Cancel Request" })).toHaveCount(0);
+    await expect(recipientPage.getByRole("button", { name: "Pay" })).toBeVisible();
+
+    await recipientContext.close();
+  });
+
+  test("rejects cancel on a paid request with 409", async ({ browser, page }) => {
+    const sender = makeUser("term-paid-sender");
+    const recipient = makeUser("term-paid-recipient");
+
+    const { context: recipientContext, page: recipientPage } = await newUserPage(browser);
+    await signup(page, sender);
+    await signup(recipientPage, recipient);
+
+    const request = await createRequest(page, {
+      recipient: recipient.email,
+      amount: "35.00",
+      note: "Terminal paid test",
+    });
+
+    await postAction(recipientPage, request.id, "pay", randomUUID());
+
+    const cancelResponse = await postAction(page, request.id, "cancel", randomUUID());
+    expect(cancelResponse.status).toBe(409);
+    expect(cancelResponse.body).toMatchObject({ code: "CONFLICT" });
+
+    await recipientContext.close();
+  });
+
+  test("rejects pay on a declined request with 409", async ({ browser, page }) => {
+    const sender = makeUser("term-declined-sender");
+    const recipient = makeUser("term-declined-recipient");
+
+    const { context: recipientContext, page: recipientPage } = await newUserPage(browser);
+    await signup(page, sender);
+    await signup(recipientPage, recipient);
+
+    const request = await createRequest(page, {
+      recipient: recipient.email,
+      amount: "28.00",
+      note: "Terminal declined test",
+    });
+
+    await postAction(recipientPage, request.id, "decline", randomUUID());
+
+    const payResponse = await postAction(recipientPage, request.id, "pay", randomUUID());
+    expect(payResponse.status).toBe(409);
+    expect(payResponse.body).toMatchObject({ code: "CONFLICT" });
+
+    await recipientContext.close();
+  });
+
+  test("rejects pay on a cancelled request with 409", async ({ browser, page }) => {
+    const sender = makeUser("term-cancel-sender");
+    const recipient = makeUser("term-cancel-recipient");
+
+    const { context: recipientContext, page: recipientPage } = await newUserPage(browser);
+    await signup(page, sender);
+    await signup(recipientPage, recipient);
+
+    const request = await createRequest(page, {
+      recipient: recipient.email,
+      amount: "42.00",
+      note: "Terminal cancel test",
+    });
+
+    await postAction(page, request.id, "cancel", randomUUID());
+
+    const payResponse = await postAction(recipientPage, request.id, "pay", randomUUID());
+    expect(payResponse.status).toBe(409);
+    expect(payResponse.body).toMatchObject({ code: "CONFLICT" });
+
+    await recipientContext.close();
+  });
+
+  test("handles multiple requests between same users independently", async ({
+    browser,
+    page,
+  }) => {
+    const sender = makeUser("multi-sender");
+    const recipient = makeUser("multi-recipient");
+
+    const { context: recipientContext, page: recipientPage } = await newUserPage(browser);
+    await signup(page, sender);
+    await signup(recipientPage, recipient);
+
+    const request1 = await createRequest(page, {
+      recipient: recipient.email,
+      amount: "10.00",
+      note: "Multi request 1",
+    });
+
+    const request2 = await createRequest(page, {
+      recipient: recipient.email,
+      amount: "20.00",
+      note: "Multi request 2",
+    });
+
+    const request3 = await createRequest(page, {
+      recipient: recipient.email,
+      amount: "30.00",
+      note: "Multi request 3",
+    });
+
+    await postAction(recipientPage, request1.id, "pay", randomUUID());
+    await postAction(recipientPage, request2.id, "decline", randomUUID());
+
+    await openRequest(recipientPage, request1.id);
+    await expect(recipientPage.locator('[aria-label="Request status"]')).toHaveText(/Paid/);
+
+    await openRequest(recipientPage, request2.id);
+    await expect(recipientPage.locator('[aria-label="Request status"]')).toHaveText(/Declined/);
+
+    await openRequest(recipientPage, request3.id);
+    await expect(recipientPage.locator('[aria-label="Request status"]')).toHaveText(/Pending/);
+
+    await recipientContext.close();
+  });
 });

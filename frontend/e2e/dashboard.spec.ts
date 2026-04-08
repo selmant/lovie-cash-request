@@ -85,6 +85,15 @@ test.describe("dashboard scenarios", () => {
     await incomingContext.close();
   });
 
+  test("shows empty state for a fresh user with no requests", async ({ page }) => {
+    const user = makeUser("empty-dash-user");
+    await signup(page, user);
+
+    await page.goto("/");
+    await expect(page.getByRole("tab", { name: "Outgoing" })).toBeVisible();
+    await expect(page.getByText(/no requests/i)).toBeVisible();
+  });
+
   test("remains usable on mobile without horizontal overflow", async ({ page }) => {
     const user = makeUser("mobile-user");
 

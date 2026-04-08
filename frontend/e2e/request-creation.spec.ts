@@ -1,6 +1,8 @@
+import { randomUUID } from "node:crypto";
+
 import { expect, test } from "@playwright/test";
 
-import { createRequest, makeUser, newUserPage, signup } from "./helpers";
+import { createRequest, makeUser, newUserPage, postAction, signup } from "./helpers";
 
 test.describe("request creation scenarios", () => {
   test("creates requests with and without notes and resolves pending requests after recipient signup", async ({
@@ -134,6 +136,34 @@ test.describe("request creation scenarios", () => {
 
     await recipientContext.close();
     await strangerContext.close();
+  });
+
+  test("shows 'Request not found' for non-existent and invalid request IDs", async ({ page }) => {
+    const user = makeUser("notfound-user");
+    await signup(page, user);
+
+    await page.goto(`/requests/${randomUUID()}`);
+    await expect(page.getByText("Request not found")).toBeVisible();
+
+    await page.goto("/requests/not-a-valid-uuid");
+    await expect(page.getByText("Request not found")).toBeVisible();
+  });
+
+  test("returns 404 when acting on a non-existent request via API", async ({ page }) => {
+    const user = makeUser("notfound-action-user");
+    await signup(page, user);
+
+    const response = await postAction(page, randomUUID(), "pay", randomUUID());
+    expect(response.status).toBe(404);
+    expect(response.body).toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  test("handles share link with non-existent token", async ({ page }) => {
+    const user = makeUser("bad-share-user");
+    await signup(page, user);
+
+    await page.goto("/r/nonexistent-token-abc123");
+    await expect(page.getByText(/not found/i).or(page.getByText(/not authorized/i))).toBeVisible();
   });
 });
 

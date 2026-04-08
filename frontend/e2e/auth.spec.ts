@@ -1,6 +1,8 @@
+import { randomUUID } from "node:crypto";
+
 import { expect, test } from "@playwright/test";
 
-import { expectProtectedRedirect, login, logout, makeUser, signup } from "./helpers";
+import { createRequest, expectProtectedRedirect, login, logout, makeUser, newUserPage, openRequest, signup } from "./helpers";
 
 test.describe("auth scenarios", () => {
   test("redirects unauthenticated users and preserves protected targets", async ({ page }) => {
@@ -27,7 +29,7 @@ test.describe("auth scenarios", () => {
     await page.getByLabel("Phone (optional)").fill(user.phone);
     await page.getByRole("button", { name: "Sign up" }).click();
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByText(user.email)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Log out" })).toBeVisible();
 
     await page.goto("/new");
     await expect(page).not.toHaveURL(/\/login/);
@@ -46,6 +48,49 @@ test.describe("auth scenarios", () => {
 
     await login(page, user.email, { navigate: false });
     await expect(page).toHaveURL(/\/$/);
-    await expect(page.getByText(user.email)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Log out" })).toBeVisible();
+  });
+
+  test("rejects action requests without a valid CSRF token", async ({ browser, page }) => {
+    const sender = makeUser("csrf-sender");
+    const recipient = makeUser("csrf-recipient");
+
+    const { context: recipientContext, page: recipientPage } = await newUserPage(browser);
+    await signup(page, sender);
+    await signup(recipientPage, recipient);
+
+    const request = await createRequest(page, {
+      recipient: recipient.email,
+      amount: "15.00",
+      note: "CSRF test",
+    });
+
+    const response = await recipientPage.evaluate(
+      async ({ requestId, idempotencyKey }) => {
+        const res = await fetch(`/api/requests/${requestId}/pay`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": idempotencyKey,
+          },
+        });
+        const text = await res.text();
+        try {
+          return { status: res.status, body: JSON.parse(text) };
+        } catch {
+          return { status: res.status, body: text };
+        }
+      },
+      { requestId: request.id, idempotencyKey: randomUUID() },
+    );
+
+    expect(response.status).toBe(403);
+    expect(response.body).toMatchObject({ code: "FORBIDDEN" });
+
+    await openRequest(recipientPage, request.id);
+    await expect(recipientPage.locator('[aria-label="Request status"]')).toHaveText(/Pending/);
+
+    await recipientContext.close();
   });
 });
