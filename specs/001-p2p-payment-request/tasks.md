@@ -43,20 +43,20 @@
 
 **CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T011 Create goose migrations for `users`, `payment_requests`, and `sessions` tables in `backend/internal/db/migrations/` per data-model.md (includes all indexes, CHECK constraints, and derived status CASE WHEN)
-- [ ] T012 Write sqlc query files in `backend/internal/db/queries/` for base CRUD operations: `users.sql` (create, get by email, get by id) and `requests.sql` (insert with share_token + expires_at, get by id with derived status, get by share_token)
-- [ ] T013 Run sqlc generate to produce Go code in `backend/internal/db/store/`
-- [ ] T014 [P] Implement config package in `backend/internal/config/config.go` (parse DATABASE_URL, PORT, SESSION_SECRET, CORS_ORIGIN, ENVIRONMENT from env)
-- [ ] T015 [P] Implement Go entry point in `backend/cmd/server/main.go` (database connection, session manager init, router setup, graceful shutdown)
-- [ ] T016 [P] Setup Chi router skeleton with middleware chain in `backend/internal/api/router.go` (CORS, session loading, logging, recovery)
-- [ ] T017 [P] Implement session manager setup with scs + PostgreSQL store in `backend/internal/api/middleware.go`
-- [ ] T018 [P] Implement CSRF double-submit cookie middleware and GET /api/csrf endpoint in `backend/internal/api/csrf.go`
-- [ ] T019 [P] Implement rate limiting middleware (golang.org/x/time/rate, per-user map, 10 req/min) in `backend/internal/api/middleware.go`
-- [ ] T020 [P] Implement common JSON response helpers (success, error with codes, validation errors with details) in `backend/internal/api/response.go`
-- [ ] T021 [P] Create frontend API client (fetch wrapper with credentials:include, CSRF token from cookie, Idempotency-Key header) in `frontend/src/lib/api-client.ts`
-- [ ] T022 [P] Setup React Router v7 with createBrowserRouter, layout routes, and placeholder pages in `frontend/src/App.tsx` and `frontend/src/main.tsx`
-- [ ] T023 [P] Define shared TypeScript types (User, PaymentRequest, API response shapes, error codes) in `frontend/src/types/index.ts`
-- [ ] T024 [P] Install shadcn/ui base components: Button, Input, Label, Card, Skeleton, Sonner (toast), Tabs, Badge, Select, AlertDialog, Table in `frontend/src/components/ui/`
+- [X] T011 Create goose migrations for `users`, `payment_requests`, and `sessions` tables in `backend/internal/db/migrations/` per data-model.md (includes all indexes, CHECK constraints, and derived status CASE WHEN)
+- [X] T012 Write sqlc query files in `backend/internal/db/queries/` for base CRUD operations: `users.sql` (create, get by email, get by id) and `requests.sql` (insert with share_token + expires_at, get by id with derived status, get by share_token)
+- [X] T013 Run sqlc generate to produce Go code in `backend/internal/db/store/`
+- [X] T014 [P] Implement config package in `backend/internal/config/config.go` (parse DATABASE_URL, PORT, SESSION_SECRET, CORS_ORIGIN, ENVIRONMENT from env)
+- [X] T015 [P] Implement Go entry point in `backend/cmd/server/main.go` (database connection, session manager init, router setup, graceful shutdown)
+- [X] T016 [P] Setup Chi router skeleton with middleware chain in `backend/internal/api/router.go` (CORS, session loading, logging, recovery)
+- [X] T017 [P] Implement session manager setup with scs + PostgreSQL store in `backend/internal/api/middleware.go`
+- [X] T018 [P] Implement CSRF double-submit cookie middleware and GET /api/csrf endpoint in `backend/internal/api/csrf.go`
+- [X] T019 [P] Implement rate limiting middleware (golang.org/x/time/rate, per-user map, 10 req/min) in `backend/internal/api/middleware.go`
+- [X] T020 [P] Implement common JSON response helpers (success, error with codes, validation errors with details) in `backend/internal/api/response.go`
+- [X] T021 [P] Create frontend API client (fetch wrapper with credentials:include, CSRF token from cookie, Idempotency-Key header) in `frontend/src/lib/api-client.ts`
+- [X] T022 [P] Setup React Router v7 with createBrowserRouter, layout routes, and placeholder pages in `frontend/src/App.tsx` and `frontend/src/main.tsx`
+- [X] T023 [P] Define shared TypeScript types (User, PaymentRequest, API response shapes, error codes) in `frontend/src/types/index.ts`
+- [X] T024 [P] Install shadcn/ui base components: Button, Input, Label, Card, Skeleton, Sonner (toast), Tabs, Badge, Select, AlertDialog, Table in `frontend/src/components/ui/`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 

@@ -24,9 +24,6 @@ Thumbs.db
 # Logs
 *.log
 
-# Go
-backend/internal/db/store/
-
 # Frontend
 frontend/node_modules/
 frontend/dist/
