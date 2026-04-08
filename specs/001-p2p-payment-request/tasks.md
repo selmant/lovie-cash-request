@@ -24,16 +24,16 @@
 
 **Purpose**: Project initialization, tooling, and basic structure
 
-- [ ] T001 Create project directory structure per plan.md (`backend/cmd/server/`, `backend/internal/{api,config,db,service}/`, `frontend/src/{components,hooks,types,routes,lib}/`)
-- [ ] T002 Initialize Go module with dependencies in `backend/go.mod` (chi, sqlc, goose, scs, scs-pgxstore, testify, x/time/rate, x/crypto)
-- [ ] T003 [P] Initialize frontend with Vite + React 19 + TypeScript strict mode in `frontend/` (pnpm init, vite, react, react-dom, react-router)
-- [ ] T004 [P] Create `.env.example` at repository root with DATABASE_URL, PORT, SESSION_SECRET, CORS_ORIGIN, ENVIRONMENT
-- [ ] T005 [P] Configure golangci-lint strict config in `backend/.golangci.yml` (errcheck, staticcheck, gosec, govet)
-- [ ] T006 [P] Configure ESLint flat config in `frontend/eslint.config.js` and Prettier in `frontend/.prettierrc` with TypeScript strict rules and import ordering
-- [ ] T007 [P] Setup TailwindCSS v4 and shadcn/ui in `frontend/` (tailwind.config.ts, postcss, cn utility in `frontend/src/lib/utils.ts`)
-- [ ] T008 [P] Create `docker-compose.yml` at repository root with PostgreSQL, backend (Go), and frontend (Vite) services
-- [ ] T009 [P] Create `backend/Dockerfile` (multi-stage Go build) and `frontend/Dockerfile` (multi-stage Node build with nginx)
-- [ ] T010 [P] Add sqlc configuration in `backend/sqlc.yaml` pointing to `internal/db/migrations/` and `internal/db/queries/`
+- [X] T001 Create project directory structure per plan.md (`backend/cmd/server/`, `backend/internal/{api,config,db,service}/`, `frontend/src/{components,hooks,types,routes,lib}/`)
+- [X] T002 Initialize Go module with dependencies in `backend/go.mod` (chi, sqlc, goose, scs, scs-pgxstore, testify, x/time/rate, x/crypto)
+- [X] T003 [P] Initialize frontend with Vite + React 19 + TypeScript strict mode in `frontend/` (pnpm init, vite, react, react-dom, react-router)
+- [X] T004 [P] Create `.env.example` at repository root with DATABASE_URL, PORT, SESSION_SECRET, CORS_ORIGIN, ENVIRONMENT
+- [X] T005 [P] Configure golangci-lint strict config in `backend/.golangci.yml` (errcheck, staticcheck, gosec, govet)
+- [X] T006 [P] Configure ESLint flat config in `frontend/eslint.config.js` and Prettier in `frontend/.prettierrc` with TypeScript strict rules and import ordering
+- [X] T007 [P] Setup TailwindCSS v4 and shadcn/ui in `frontend/` (tailwind.config.ts, postcss, cn utility in `frontend/src/lib/utils.ts`)
+- [X] T008 [P] Create `docker-compose.yml` at repository root with PostgreSQL, backend (Go), and frontend (Vite) services
+- [X] T009 [P] Create `backend/Dockerfile` (multi-stage Go build) and `frontend/Dockerfile` (multi-stage Node build with nginx)
+- [X] T010 [P] Add sqlc configuration in `backend/sqlc.yaml` pointing to `internal/db/migrations/` and `internal/db/queries/`
 
 ---
 
