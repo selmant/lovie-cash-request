@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { api } from "@/lib/api-client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,18 +29,19 @@ export function Component() {
   const [search, setSearch] = useState("");
   const [requests, setRequests] = useState<PaymentRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const fetchIdRef = useRef(0);
 
   useEffect(() => {
-    const id = ++fetchIdRef.current;
+    let cancelled = false;
     const params = new URLSearchParams({ direction });
     if (status !== "all") params.set("status", status);
     if (search) params.set("search", search);
 
     api
       .get<RequestListResponse>(`/requests?${params}`)
-      .then((res) => { if (fetchIdRef.current === id) { setRequests(res.requests); setLoading(false); } })
-      .catch(() => { if (fetchIdRef.current === id) { setRequests([]); setLoading(false); } });
+      .then((res) => { if (!cancelled) { setRequests(res.requests); setLoading(false); } })
+      .catch(() => { if (!cancelled) { setRequests([]); setLoading(false); } });
+
+    return () => { cancelled = true; };
   }, [direction, status, search]);
 
   return (
