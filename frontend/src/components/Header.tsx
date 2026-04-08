@@ -1,9 +1,19 @@
 import { Link } from "react-router";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { getTheme, setTheme } from "@/lib/theme";
+import { Moon, Sun } from "lucide-react";
 
 export function Header() {
   const { user, logout } = useAuth();
+  const [dark, setDark] = useState(getTheme() === "dark");
+
+  const toggleTheme = () => {
+    const next = dark ? "light" : "dark";
+    setTheme(next);
+    setDark(!dark);
+  };
 
   return (
     <header className="border-b">
@@ -12,7 +22,7 @@ export function Header() {
           <Link to="/" className="text-lg font-semibold">
             Cash Request
           </Link>
-          <nav className="flex items-center gap-4">
+          <nav className="hidden sm:flex items-center gap-4">
             <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
               Dashboard
             </Link>
@@ -21,10 +31,13 @@ export function Header() {
             </Link>
           </nav>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
+            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
           {user && (
             <>
-              <span className="text-sm text-muted-foreground">{user.email}</span>
+              <span className="text-sm text-muted-foreground hidden sm:inline">{user.email}</span>
               <Button variant="ghost" size="sm" onClick={logout}>
                 Log out
               </Button>

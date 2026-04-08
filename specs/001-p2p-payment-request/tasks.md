@@ -163,12 +163,12 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T057 [P] Implement dark theme default with light/dark toggle (localStorage persistence) in `frontend/src/components/Header.tsx` and `frontend/src/lib/theme.ts` (FR-021a)
-- [ ] T058 [P] Ensure mobile-responsive layout across all pages (320px+ viewport, 44px touch targets, single-column on mobile) (FR-021)
-- [ ] T059 [P] Add skeleton loading states (shadcn Skeleton) to Dashboard tables, Request Detail, and auth check loading in relevant route components (FR-028)
-- [ ] T060 [P] Setup Playwright config with video recording in `frontend/playwright.config.ts` and `frontend/e2e/` directory structure
-- [ ] T061 [P] Create README.md with project overview, quickstart instructions, and multi-user testing guide at repository root
-- [ ] T062 Run `docker compose up` validation — verify all services start, migrations run, frontend proxies to backend, full user flow works end-to-end
+- [X] T057 [P] Implement dark theme default with light/dark toggle (localStorage persistence) in `frontend/src/components/Header.tsx` and `frontend/src/lib/theme.ts` (FR-021a)
+- [X] T058 [P] Ensure mobile-responsive layout across all pages (320px+ viewport, 44px touch targets, single-column on mobile) (FR-021)
+- [X] T059 [P] Add skeleton loading states (shadcn Skeleton) to Dashboard tables, Request Detail, and auth check loading in relevant route components (FR-028)
+- [X] T060 [P] Setup Playwright config with video recording in `frontend/playwright.config.ts` and `frontend/e2e/` directory structure
+- [X] T061 [P] Create README.md with project overview, quickstart instructions, and multi-user testing guide at repository root
+- [X] T062 Run `docker compose up` validation — verify all services start, migrations run, frontend proxies to backend, full user flow works end-to-end
 
 ---
 
